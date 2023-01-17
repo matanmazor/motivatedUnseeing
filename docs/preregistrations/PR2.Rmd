@@ -1,0 +1,150 @@
+---
+title             : "Motivated seeing and unseeing - Exp. 2 pre-registration document"
+shorttitle        : "Motivated seeing and unseeing - Exp. 2 pre-registration document"
+
+author: 
+  - name          : "Matan Mazor"
+    affiliation   : "1,2"
+    corresponding : yes    # Define only one corresponding author
+    address       : "Malet Street, London WC1E 7HX"
+    email         : "mtnmzor@gmail.com"
+  #   role:         # Contributorship roles (e.g., CRediT, https://casrai.org/credit/)
+  #     - Conceptualization
+  #     - Writing - Original Draft Preparation
+  #     - Writing - Review & Editing
+  
+  - name          : "Itay Goetz"
+    affiliation   : "3"
+    
+  - name          : "Clare Press"
+    affiliation   : "1,2"
+    # role:
+    #   - Writing - Review & Editing
+
+affiliation:
+  - id            : "1"
+    institution   : "Birkbeck, University of London"
+  - id            : "2"
+    institution   : "Wellcome Centre for Human Neuroimaging, UCL"
+  - id            : "3"
+    institution   : "University of Bamberg"
+
+
+abstract: |
+  
+  
+  
+  <!-- https://tinyurl.com/ybremelq -->
+  
+keywords          : "keywords"
+wordcount         : "X"
+
+bibliography      : ["r-references.bib"]
+
+floatsintext      : no
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : yes
+mask              : no
+draft             : no
+
+documentclass     : "apa6"
+classoption       : "man"
+output            : papaja::apa6_word
+---
+
+```{r setup, include = FALSE}
+library("papaja")
+r_refs("r-references.bib")
+```
+
+```{r analysis-preferences}
+# Seed for random number generation
+set.seed(42)
+knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
+```
+
+# Motivation
+
+Previous studies suggest that sensory input is not the only information that our perception of the environment depends on. Rather, our perception is constructed by the combination of sensory input and top-down influences like expectation (de Lange et al, 2018; Kok et al., 2013). In other words, our brain does not passively encode sensory information from the outside world; it constantly and actively samples and filters this information, makes predictions and tests them [@van2011putting].
+
+One other top-down influence is motivation. In addition to reports of increased sensitivity to reward-associated stimuli [@libera2006visual; @pessoa2010embedding], recent findings further suggest that motivation has a biasing effect on perception [@balcetis2012subjective; @leong2021pupil; @leong2019neurocomputational]. For example, @leong2019neurocomputational presented participants with an ambiguous stimulus which consisted of an overlay of two images (a face and a scene) with the face being slightly more dominant in some trials, and the scene in others. On different experimental blocks, face-dominant or scene-dominant images were associated with a reward. As predicted, participants were more likely to report predominantly perceiving the rewarded stimulus – an effect that has been shown to reflect a combination of increased gain for motivated sensory representations and a non-perceptual decision bias, driven by subcortical mechanisms [@leong2021pupil; @leong2019neurocomputational]. 
+
+In a previous online experiment, we aimed to replicate these findings in an online setting. Participants performed a categorisation task of noisy images (‘bird or fish?’), and in addition to incentivizing them to make accurate responses, on different experimental blocks bird images were associated with either a reward or a loss. We found that participants had an overall bias to report seeing birds, and that this response bias disappeared when bird images were associated with losing points. However, and in contrast with previous reports of motivated perception [@balcetis2012subjective; @leong2021pupil; @leong2019neurocomputational], we found no effect of associating bird images with a reward on response bias. Since fish images were never associated with the loss of gain of points, we cannot tell whether this loss/reward asymmetry reflects an asymmetry between our reward and loss manipulations (such that only the loss manipulation is effective), or alternatively, whether it reflects an asymmetry in the perception of birds and fish (such that fish images are more amenable to enhancement, or bird images more amenable to suppression, by a motivation manipulation). To this end, here we replicate Exp. 1 with one critical change: the loss or gain of points will be associated with fish, rather than bird images.
+
+# Methods
+We report how we determined our sample size, all data exclusions (if any), all manipulations, and all measures in the study. <!-- 21-word solution (Simmons, Nelson & Simonsohn, 2012; retrieved from http://ssrn.com/abstract=2160588) -->
+
+## Participants
+
+The study was approved by the Research Ethics Committee of Birkbeck, University of London (study ID number 2122050). No adverse effects for participants from participation in the study are expected. Participants will give consent for taking part in the study which can be withdrawn at any time. 
+
+One hundred participants will be recruited from the Prolific database. The criteria for recruitment will be a Prolific approval rate of 95%, English as their first language, and an age between 18 and 60. The study will take participants about 15 minutes of their time. Participants will be paid 7.5 pounds per hour. The top-performing 30% of participants will get an additional bonus payment of £1.
+
+
+## Procedure
+
+Figure \@ref(fig:design) illustrates the experimental design. In a near-threshold categorisation task, participants will report whether they saw an image of a bird or a fish. At the beginning of the experiment, participants will be given instructions and their understanding will be checked by a multiple-choice question. Then, participants will be presented with a practice block, which will be repeated until accuracy on the task reaches 75%. The practice round will then be followed by the main part of the experiment, comprising six blocks of 28 trials. At the beginning of each trial a fixation cross will appear on the screen for 500-1000 milliseconds, followed by three grayscale images: a forward mask (presented for 50 ms), the target image (presentation time calibrated to achieve 70% accuracy), and a backward mask (presented until a decision is made). All images are from the noisy animals stimulus set curated, processed, and kindly shared by, @meuwese2014subjective. Participants’ task will be to judge whether the second image was of a bird or a fish. They will be asked to indicate their decision using the J and F keys on the keyboard, counterbalanced across participants. The next trial will not begin until participants press one of these keys to indicate their decision. 
+
+In addition to a base payment, participants will be told that they can accumulate points in the task, and that these points will determine whether or not they get a bonus payment. Specifically, that a bonus payment of £1 will be given to the top 30% of highest performing participants. 
+
+In all blocks, participants will be told that correct responses award them with 10 points. In addition, on two fish-reward blocks, fish images will be rewarded with an extra 12 points, and on two fish-loss blocks, fish images will be associated with a loss of 12 points. Two neutral blocks will include gains or losses for fish images. The order of the six blocks will be randomized, with the constraint that the two blocks of each condition are always be presented consequently. 
+
+Importantly, in all blocks participants will be motivated to make accurate judgments regarding the content of the presented image, but on some blocks the presence of a fish (regardless of their decision) will be associated with a gain of points, while on others the presence of a fish will be associated with a loss of points. Two multiple-choice questions will be used to make sure participants understand these instructions (for example, “To get many points I need to…” correct answer: “press F when the second image contained a bird and J when it contained a fish”, and not “press F as many times as possible”; “In addition to getting 10 points for accurate responses, in this block whenever a fish image is presented…” correct answer: “I automatically get 12 additional points”, and not “I get 12 additional points only if I pressed F”). Neutral blocks will be preceded by the response mapping comprehension question (“To get many points I need to…” correct answer: “press F when the second image contained a bird and J when it contained a fish”). An additional question ("In addition to getting 10 points for accurate responses, in this block whenever a fish image is presented...", correct response: "I don't get or lose additional points") will be presented only to those participants for which this is not the first experimental condition. 
+
+Task difficulty will be calibrated by adjusting the target presentation time, starting at 60 ms and following a one-up-two-down procedure with a multiplicative step size of 0.9, which will move closer to 1 following each change in the direction of the calibration process. The calibration will run in the background throughout the entire task. 
+
+Upon completion of the main part of the experiment, participants will complete the white bear suppression inventory [@wegner1994chronic].
+
+
+```{r design, echo=FALSE, fig.cap="Experimental design.Top left: Trial structure. The target image’s presentation time will be calibrated to achieve 70% accuracy. Top right: incentive structure on different experimental blocks. Bottom: Overall experiment structure.", out.width = '75%'}
+knitr::include_graphics("figures/design_exp2.png")
+```
+
+### Randomization
+
+The order and timing of experimental events will be determined pseudo-randomly by the Mersenne Twister pseudorandom number generator, initialized in a way that ensures registration time-locking [@mazor2019novel]. 
+
+
+## Rejection criteria
+
+Participants will be excluded if their accuracy falls below 50% in one or more experimental conditions (neutral, fish-loss, fish-reward). We will also exclude participants for having extremely fast or slow reaction times in one or more of the tasks (below 100 milliseconds or above 5 seconds in more than 25% of the trials).Trials with response time below 100 milliseconds or above 5 seconds will be excluded 
+from the response-time analysis.
+
+## Data analysis
+
+This study is designed to test several hypotheses regarding the effect of motivation on perception, with a focus on perceptual decisions and response time.
+Specifically, we plan to test the following hypotheses:
+
+*Hypothesis 1 (MOTIVATED SEEING)*: We will test the null hypothesis that the proportion of reports of seeing a fish is similar on fish-reward and neutral blocks, using a two-tailed repeated measures t-test. 
+
+*Hypothesis 2 (MOTIVATED UNSEEING)*: We will test the null hypothesis that the proportion of reports of seeing a fish is similar on fish-loss and neutral blocks, using a two-tailed repeated measures t-test.
+
+Together, H1 and H2 will test the null hypothesis that the likelihood of reporting seeing a fish on the fish-loss, neutral and fish-reward conditions is similar. 
+
+
+*Hypothesis 3 (REWARD EFFECT ON DECISION TIME: TARGET STIMULUS)*: We will test the null hypothesis that response times for fish (target) images are similar in fish-reward and in neutral blocks, aiming to replicate the finding that decisions consistent with motivation are faster [@leong2021pupil; @leong2019neurocomputational]. This will be tested using a paired t-test on the median individual level-response times. 
+
+*Hypothesis 4 (REWARD EFFECT ON DECISION TIME: NEUTRAL STIMULUS)*: We will test the null hypothesis that response times for fish (neutral) images are similar in fish-reward and in neutral blocks, aiming to replicate the finding that decisions consistent with motivation are faster [@leong2021pupil; @leong2019neurocomputational]. This will be tested using a paired t-test on the median individual level-response times. 
+
+*Hypothesis 5 (LOSS EFFECT ON DECISION TIME: TARGET STIMULUS)*: We will test the null hypothesis that response times for fish (target) images are similar in fish-loss and in neutral blocks. This will be tested using a paired t-test on the median individual level-response times. 
+
+*Hypothesis 6 (LOSS EFFECT ON DECISION TIME: NEUTRAL STIMULUS)*: We will test the null hypothesis that response times for fish (neutral) images are similar in fish-loss and in neutral blocks. This will be tested using a paired t-test on the median individual level-response times. 
+
+### Exploratory analysis: Drift Diffusion Modelling (DDM)
+
+DDM assumes that perceptual decisions (did a bird appear on the screen or not) are made by sequentially sampling the sensory evidence from a starting point to one of two boundaries (e.g., presence or absence decision), until one of the boundaries is reached and a response is made. There are three ways by which the model could account for a bias towards one boundary. First, motivation may bias the rate of evidence accumulation for desired stimuli (drift biasing). In this case the starting point is identical to an unbiased decision-making process but the gradient of accumulation towards the two bounds differs [@ratcliff2016diffusion]. Second, motivation may shift the starting point of the evidence accumulation process towards a certain decision boundary (seeing a fish when a fish is associated with a reward), and third, motivation may alter both the starting point and drift rate of the accumulation process  - as reported by @leong2019neurocomputational. We will fit different models to the data to examine which behavioural pattern can best explain our results. 
+
+
+
+\newpage
+
+# References
+
+\begingroup
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
+
+<div id="refs" custom-style="Bibliography"></div>
+\endgroup

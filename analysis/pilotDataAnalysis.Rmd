@@ -1,0 +1,430 @@
+---
+title             : "The title"
+shorttitle        : "Title"
+
+author: 
+  - name          : "First Author"
+    affiliation   : "1"
+    corresponding : yes    # Define only one corresponding author
+    address       : "Postal address"
+    email         : "my@email.com"
+    role:         # Contributorship roles (e.g., CRediT, https://casrai.org/credit/)
+      - Conceptualization
+      - Writing - Original Draft Preparation
+      - Writing - Review & Editing
+  - name          : "Ernst-August Doelle"
+    affiliation   : "1,2"
+    role:
+      - Writing - Review & Editing
+
+affiliation:
+  - id            : "1"
+    institution   : "Wilhelm-Wundt-University"
+  - id            : "2"
+    institution   : "Konstanz Business School"
+
+authornote: |
+  Add complete departmental affiliations for each author here. Each new line herein must be indented, like this line.
+
+  Enter author note here.
+
+abstract: |
+  One or two sentences providing a **basic introduction** to the field,  comprehensible to a scientist in any discipline.
+  
+  Two to three sentences of **more detailed background**, comprehensible  to scientists in related disciplines.
+  
+  One sentence clearly stating the **general problem** being addressed by  this particular study.
+  
+  One sentence summarizing the main result (with the words "**here we show**" or their equivalent).
+  
+  Two or three sentences explaining what the **main result** reveals in direct comparison to what was thought to be the case previously, or how the  main result adds to previous knowledge.
+  
+  One or two sentences to put the results into a more **general context**.
+  
+  Two or three sentences to provide a **broader perspective**, readily comprehensible to a scientist in any discipline.
+  
+  <!-- https://tinyurl.com/ybremelq -->
+  
+keywords          : "keywords"
+wordcount         : "X"
+
+bibliography      : ["r-references.bib"]
+
+floatsintext      : no
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : yes
+mask              : no
+draft             : no
+
+documentclass     : "apa6"
+classoption       : "man"
+output            : papaja::apa6_pdf
+---
+
+```{r setup, include = FALSE}
+library("papaja")
+library('dplyr')
+library('tidyr')
+library('ggplot2')
+library('jsonlite') # for WSBI
+library('purrr') # for map
+
+r_refs("r-references.bib")
+```
+
+```{r analysis-preferences}
+# Seed for random number generation
+set.seed(42)
+knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
+```
+
+
+
+# Methods
+We report how we determined our sample size, all data exclusions (if any), all manipulations, and all measures in the study. <!-- 21-word solution (Simmons, Nelson & Simonsohn, 2012; retrieved from http://ssrn.com/abstract=2160588) -->
+
+## Participants
+
+## Material
+
+## Procedure
+
+## Data analysis
+We used `r cite_r("r-references.bib")` for all our analyses.
+
+
+# Results
+
+
+```{r load_and_format_data, echo=FALSE, cache=TRUE}
+E1.raw_df <- read.table("../experiments/bird_fish/data/jatos_results_batch1.txt",sep=',', header=TRUE, colClasses=c("bird_key"="character")) %>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = correct=='true',
+         RT = as.numeric(RT),
+         resp = toupper(response)==toupper(bird_key),
+         target_time = as.numeric(target_time))
+
+E2.raw_df <- read.table("../experiments/fish_bird2/data/jatos_results_batch1.txt",sep=',', header=TRUE, colClasses=c("fish_key"="character")) %>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = correct=='true',
+         RT = as.numeric(RT),
+         resp = toupper(response)==toupper(fish_key),
+         target_time = as.numeric(target_time))
+
+# pilot.export.df <- read_csv('../experiments/pilots/letters/data/prolific_export_batch2.csv')
+```
+
+```{r exclusion, echo=FALSE, cache=TRUE}
+
+E1.to_exclude_RT <- E1.raw_df %>%
+  filter(test_part=='neutral' | test_part=='bird_loss' | test_part =='bird_bonus') %>%
+  group_by(subj_id) %>%
+  summarise(
+    first_quartile_RT = quantile(RT,0.25),
+    third_quartile_RT = quantile(RT,0.75)
+  ) %>%
+  # filter(accuracy<0.5 | first_quartile_RT<100 | third_quartile_RT>5000)
+    filter(first_quartile_RT<100 | third_quartile_RT>5000) %>%
+  pull(subj_id)
+
+E2.to_exclude_RT <- E2.raw_df %>%
+  filter(test_part=='neutral' | test_part=='fish_loss' | test_part =='fish_bonus') %>%
+  group_by(subj_id) %>%
+  summarise(
+    first_quartile_RT = quantile(RT,0.25),
+    third_quartile_RT = quantile(RT,0.75)
+  ) %>%
+  # filter(accuracy<0.5 | first_quartile_RT<100 | third_quartile_RT>5000)
+    filter(first_quartile_RT<100 | third_quartile_RT>5000) %>%
+  pull(subj_id)
+
+
+E1.to_exclude_accuracy <- E1.raw_df %>%
+  filter(test_part=='neutral' | test_part=='bird_loss' | test_part =='bird_bonus') %>%
+  group_by(subj_id,test_part) %>%
+  summarise(
+    accuracy = mean(correct)
+  ) %>%
+    filter(accuracy<0.5) %>%
+  pull(subj_id) %>%
+  unique()
+
+E2.to_exclude_accuracy <- E2.raw_df %>%
+  filter(test_part=='neutral' | test_part=='fish_loss' | test_part =='fish_bonus') %>%
+  group_by(subj_id,test_part) %>%
+  summarise(
+    accuracy = mean(correct)
+  ) %>%
+    filter(accuracy<0.5) %>%
+  pull(subj_id) %>%
+  unique()
+
+# some participants reported that some images didn't show, so we exclude them.
+E1.to_exclude_technical <- c(
+  '5f901c39da08ae0598da82d5',
+  '610e5239f868e87f3b5a6087'
+)
+
+E2.to_exclude_technical <- c(
+  '5f1ffcf7eed8dd01d7ac91e4'
+)
+
+
+E1.df <- E1.raw_df %>%
+  filter(!(subj_id %in% E1.to_exclude_accuracy | subj_id %in% E1.to_exclude_RT | subj_id %in% E1.to_exclude_technical));
+
+E2.df <- E2.raw_df %>%
+  filter(!(subj_id %in% E2.to_exclude_accuracy | subj_id %in% E2.to_exclude_RT | subj_id %in% E2.to_exclude_technical));
+
+```
+
+```{r instruction_repetitions, echo=FALSE, cache=TRUE}
+
+E1.instruction_repetitions <- E1.raw_df %>%
+  group_by(subj_id) %>%
+  summarise(
+    bird_instruction_repetitions=as.numeric(bird_instruction_repetitions[1]),
+    nobird_instruction_repetitions=as.numeric(nobird_instruction_repetitions[1])
+    ) %>%
+  rowwise() %>%
+  mutate(diff=bird_instruction_repetitions-nobird_instruction_repetitions)
+
+E2.instruction_repetitions <- E2.raw_df %>%
+  group_by(subj_id) %>%
+  summarise(
+    fish_instruction_repetitions=as.numeric(fish_instruction_repetitions[1]),
+    nofish_instruction_repetitions=as.numeric(nofish_instruction_repetitions[1])
+    ) %>%
+  rowwise() %>%
+  mutate(diff=fish_instruction_repetitions-nofish_instruction_repetitions)
+
+```
+
+
+```{r descriptives, echo=FALSE, cache=TRUE}
+
+E1.accuracy <- E1.df %>%
+  filter(test_part=='neutral' | test_part=='bird_loss' | test_part =='bird_bonus') %>%
+  group_by(subj_id,test_part) %>%
+  summarise(
+    accuracy = mean(correct)
+  ) %>%
+  group_by(test_part)%>%
+  summarise(accuracy=mean(accuracy))
+
+E2.accuracy <- E2.df %>%
+  filter(test_part=='neutral' | test_part=='fish_loss' | test_part =='fish_bonus') %>%
+  group_by(subj_id,test_part) %>%
+  summarise(
+    accuracy = mean(correct)
+  ) %>%
+  group_by(test_part)%>%
+  summarise(accuracy=mean(accuracy))
+
+E1.bias <- E1.df %>%
+  filter(test_part=='neutral' | test_part=='bird_loss' | test_part =='bird_bonus') %>%
+  group_by(subj_id,test_part) %>%
+  summarise(
+    bias = mean(resp)
+  ) %>%
+ group_by(test_part)%>%
+  summarise(bias=mean(bias))
+
+E2.bias <- E2.df %>%
+  filter(test_part=='neutral' | test_part=='fish_loss' | test_part =='fish_bonus') %>%
+  group_by(subj_id,test_part) %>%
+  summarise(
+    bias = mean(resp)
+  ) %>%
+ group_by(test_part)%>%
+  summarise(bias=mean(bias))
+
+E1.RT <- E1.df %>%
+  filter(RT>100 & RT<5000)%>%
+  filter(test_part=='neutral' | test_part=='bird_loss' | test_part =='bird_bonus') %>%
+  group_by(subj_id,test_part,resp) %>%
+  summarise(
+    RT = median(RT)
+  )%>%
+  group_by(test_part,resp)%>%
+  summarise(RT=median(RT))
+
+E2.RT <- E2.df %>%
+  filter(RT>100 & RT<5000)%>%
+  filter(test_part=='neutral' | test_part=='fish_loss' | test_part =='fish_bonus') %>%
+  group_by(subj_id,test_part,resp) %>%
+  summarise(
+    RT = median(RT)
+  )%>%
+  group_by(test_part,resp)%>%
+  summarise(RT=median(RT))
+
+```
+
+```{r bias, echo=FALSE, cache=TRUE}
+E1.bias <- E1.df %>%
+  filter(test_part=='neutral' | test_part=='bird_loss' | test_part =='bird_bonus') %>%
+  group_by(subj_id,test_part) %>%
+  summarise(
+    bias = mean(resp)
+  ) %>%
+  spread(test_part,bias) %>%
+  mutate(loss_effect = bird_loss-neutral,
+         gain_effect = bird_bonus-neutral)
+
+E2.bias <- E2.df %>%
+  filter(test_part=='neutral' | test_part=='fish_loss' | test_part =='fish_bonus') %>%
+  group_by(subj_id,test_part) %>%
+  summarise(
+    bias = mean(resp)
+  ) %>%
+  spread(test_part,bias) %>%
+  mutate(loss_effect = fish_loss-neutral,
+         gain_effect = fish_bonus-neutral)
+```
+
+```{r instruction_repetitions, echo=FALSE, cache=TRUE}
+
+E1.instruction_repetitions <- E1.raw_df %>%
+  group_by(subj_id) %>%
+  summarise(
+    bird_instruction_repetitions=as.numeric(bird_instruction_repetitions[1]),
+    nobird_instruction_repetitions=as.numeric(nobird_instruction_repetitions[1])
+    ) %>%
+  rowwise() %>%
+  mutate(diff=bird_instruction_repetitions-nobird_instruction_repetitions) %>%
+  merge(E1.bias) %>%
+  mutate(bias_diff = loss_effect+gain_effect) 
+
+E2.instruction_repetitions <- E2.raw_df %>%
+  group_by(subj_id) %>%
+  summarise(
+    fish_instruction_repetitions=as.numeric(fish_instruction_repetitions[1]),
+    nofish_instruction_repetitions=as.numeric(nofish_instruction_repetitions[1])
+    ) %>%
+  rowwise() %>%
+  mutate(diff=fish_instruction_repetitions-nofish_instruction_repetitions) %>%
+  merge(E2.bias) %>%
+  mutate(bias_diff = loss_effect+gain_effect) 
+
+```
+
+```{r WBSI, echo=FALSE, cache=TRUE}
+
+E1.WBSI <- E1.df %>% 
+  filter(trial_type=='survey-likert') %>%
+  select(subj_id, response) %>%
+  mutate(json = map(response, fromJSON)) %>% 
+  unnest_wider(col=json, names_repair='unique') %>%
+  mutate_if(is.list,as.integer) %>%
+  select(-response) %>%
+  rowwise()%>%
+  mutate(WBSI = sum(across(Not_to_think:Dont_tell)),
+         suppression = Not_to_think + Thoughts_avoid,Problems_out, #factor analysis from here: The white bear suppression inventory: revisiting its factor structure, Blumberg 2000
+         distraction = Distract_thoughts + Stay_busy + Stop_thinking,
+         intrusive = Cannot_stop + Cannot_erase + Thoughts_jump + One_idea + Wish_stop_thinking + Stop_mind + Wonder_thoughts + Dont_tell) %>%
+  merge(E1.bias,by='subj_id')
+
+E1.WBSI %>%
+  select(subj_id,loss_effect,gain_effect,WBSI,suppression,distraction,intrusive) %>%
+  write.csv('../experiments/bird_fish/data/summaryWBSIForClare.csv')
+  
+
+E2.WBSI <- E2.df %>% 
+  filter(trial_type=='survey-likert') %>%
+  select(subj_id, response) %>%
+  mutate(json = map(response, fromJSON)) %>% 
+  unnest_wider(col=json, names_repair='unique') %>%
+  mutate_if(is.list,as.integer) %>%
+  select(-response) %>%
+  rowwise()%>%
+  mutate(WBSI = sum(across(Not_to_think:Dont_tell)),
+         suppression = Not_to_think + Thoughts_avoid,Problems_out,
+         distraction = Distract_thoughts + Stay_busy + Stop_thinking,
+         intrusive = Cannot_stop + Cannot_erase + Thoughts_jump + One_idea + Wish_stop_thinking + Stop_mind + Wonder_thoughts + Dont_tell)  %>%
+  merge(E2.bias,by='subj_id') 
+
+E2.WBSI %>%
+  select(subj_id,loss_effect,gain_effect,WBSI,suppression,distraction,intrusive) %>%
+  write.csv('../experiments/fish_bird2/data/summaryWBSIForClare.csv')
+```
+
+
+```{r format_for_Clare, echo=FALSE, cache=TRUE}
+
+E2.df %>%
+  filter(test_part=='neutral' | test_part=='fish_loss' | test_part =='fish_bonus') %>%
+  group_by(subj_id,test_part) %>%
+  summarise(
+    bias = mean(resp)
+  ) %>%
+  spread(test_part,bias) %>%
+  merge(
+    E2.df %>%
+      group_by(subj_id) %>%
+      summarise(first_condition=first_condition[1],
+                second_condition=second_condition[1],
+                third_condition=third_condition[2])
+  ) %>% write.csv('../experiments/fish_bird2/data/summaryBiasForClare.csv')
+
+E2.df %>%
+  filter(test_part=='neutral' | test_part=='fish_loss' | test_part =='fish_bonus') %>%
+  mutate(resp = ifelse(resp, 'fish','bird')) %>%
+  group_by(subj_id,test_part,resp) %>%
+  summarise(
+    RT = median(RT)
+  ) %>%
+  pivot_wider(id_cols=subj_id,names_from=c(test_part,resp),values_from=RT)%>% 
+  write.csv('../experiments/fish_bird2/data/summaryRTForClare_exp2.csv')
+
+pilot.df %>%
+  filter(test_part=='neutral' | test_part=='bird_loss' | test_part =='bird_bonus') %>%
+  mutate(resp=ifelse(resp,'bird','fish'))%>%
+  select(subj_id,stimulus,resp,correct, RT, first_condition,second_condition,third_condition,bird_key)%>%
+  write.csv('../experiments/bird_fish/data/blockData.csv')
+
+pilot.df %>%
+  group_by(subj_id) %>%
+  summarise(points=as.numeric(points[1])) %>%
+  ungroup() %>%
+  na.omit() %>%
+  mutate(cutoff=quantile(points,0.7,na.rm=TRUE)) %>%
+  filter(points>cutoff) %>%
+  select(subj_id) %>%
+  mutate(bonus=1) %>%
+  write.table('../experiments/bird_fish/data/bonusList.txt',row.names=FALSE,sep=",", quote = FALSE)
+
+```
+
+```{r figure}
+p <- pilot.df %>%
+  filter(test_part=='neutral' | test_part=='bird_loss' | test_part =='bird_bonus') %>%
+  group_by(subj_id,test_part) %>%
+  summarise(
+    bias = mean(resp)
+  ) %>% 
+  ggplot(aes(x=test_part ,y=bias)) +
+  geom_boxplot(size=1,fill='white',outlier.alpha=0) +
+  geom_jitter(alpha=0.3,size=2, show.legend=FALSE)+
+  theme_classic() + 
+  labs(x='condition', y='proportion of bird responses')
+
+ggsave('figures/E1_bias_by_condition.png',p,width=5,height=4.5)
+
+```
+
+# Discussion
+
+
+\newpage
+
+# References
+
+\begingroup
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
+
+<div id="refs" custom-style="Bibliography"></div>
+\endgroup

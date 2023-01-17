@@ -1,0 +1,156 @@
+---
+title             : "Motivated seeing and unseeing - Exp. 7 pre-registration document"
+shorttitle        : "Motivated seeing and unseeing - Exp. 7 pre-registration document"
+
+author: 
+  - name          : "Matan Mazor"
+    affiliation   : "1,2"
+    corresponding : yes    # Define only one corresponding author
+    address       : "Malet Street, London WC1E 7HX"
+    email         : "mtnmzor@gmail.com"
+  #   role:         # Contributorship roles (e.g., CRediT, https://casrai.org/credit/)
+  #     - Conceptualization
+  #     - Writing - Original Draft Preparation
+  #     - Writing - Review & Editing
+  
+  - name          : "Itay Goetz"
+    affiliation   : "3"
+    
+  - name          : "Clare Press"
+    affiliation   : "1,2"
+    # role:
+    #   - Writing - Review & Editing
+
+affiliation:
+  - id            : "1"
+    institution   : "Birkbeck, University of London"
+  - id            : "2"
+    institution   : "Wellcome Centre for Human Neuroimaging, UCL"
+  - id            : "3"
+    institution   : "University of Bamberg"
+
+
+abstract: |
+  
+  
+  
+  <!-- https://tinyurl.com/ybremelq -->
+  
+keywords          : "keywords"
+wordcount         : "X"
+
+bibliography      : ["r-references.bib"]
+
+floatsintext      : no
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : yes
+mask              : no
+draft             : no
+
+documentclass     : "apa6"
+classoption       : "man"
+output            : papaja::apa6_word
+---
+
+```{r setup, include = FALSE}
+library("papaja")
+library('pwr')
+library('dplyr')
+r_refs("r-references.bib")
+```
+
+```{r analysis-preferences}
+# Seed for random number generation
+set.seed(42)
+knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
+```
+
+# Motivation
+
+In three online experiments, we replicated previously observed effects of motivation on perceptual decisions [@balcetis2012subjective; @leong2021pupil; @leong2019neurocomputational]. Specifically, we found that subjects were less likely to report seeing stimuli that were associated with point loss in a perceptual discrimination task, even when incentivized to report accurately. In contrast, we observed no effects of point gain on perceptual decision making. 
+
+We consider a possible explanation for this loss-specificity, namely that subjects may be particularly sensitive to the difference between positive and negative outcomes, more than to differences in the magnitude of losses or gains. For example, in the loss blocks of Exp. 1, correctly classifying a fish resulted in a net gain of 10 points, but correctly classifying a bird resulted in a net loss of 2 points (10 points for accuracy minus 12 points bird penalty). In contrast, in the gain blocks of Exp. 1, correctly classifying a fish or a bird both resulted in a net gain of points, differing only in magnitude (10 or 10+12=22). If the mechanism behind motivated perception is sensitive to a qualitative distinction between positive and negative states, a difference in reward magnitude will not be sufficient for a bias to emerge. 
+
+Here we test this hypothesis by replicating the effect of point loss on decision bias, and testing whether it disappears in loss manipulations that do not produce a decision between positive and negative outcomes.
+
+# Methods
+We report how we determined our sample size, all data exclusions (if any), all manipulations, and all measures in the study. <!-- 21-word solution (Simmons, Nelson & Simonsohn, 2012; retrieved from http://ssrn.com/abstract=2160588) -->
+
+## Participants
+
+The study was approved by the Research Ethics Committee of Birkbeck, University of London (study ID number 2122050). No adverse effects for participants from participation in the study are expected. Participants will give consent for taking part in the study which can be withdrawn at any time. 
+
+Participants will be recruited from the Prolific database. The criteria for recruitment will be a Prolific approval rate of 95%, English as their first language, and an age between 18 and 60. The study will take participants about 15 minutes of their time. Participants will be paid 7.5 pounds per hour. We will double the payment of the top-performing 30% of our participants, and triple the payment of the top performing 5%.
+We will continue data collection until we have 200 included participants, or until we recruit 300 participants. 
+
+
+## Procedure
+
+Figure \@ref(fig:design) illustrates the experimental design. In a near-threshold categorisation task, participants will report whether a noisy grating was tilted to the right (clockwise) or to the left (anticlockwise). At the beginning of the experiment, participants will be given instructions and their understanding will be checked by a multiple-choice question. Then, participants will be presented with a practice block, which will be repeated until accuracy on the task reaches 75%. The practice round will then be followed by the main part of the experiment, comprising eight blocks of 21 trials. At the beginning of each trial a fixation cross will appear on the screen for 500-1000 milliseconds, followed by three grayscale images: a forward mask (presented for 50 ms), the target image (presented for 80 ms), and a backward mask (presented until a decision is made). The forward and backward masks will comprise black and white concentric circles. The target image will be a noisy visual grating: 200x200 pixels, where 90% of the pixels show random grayscale values, and the remaining 10% are sampled from a grating (frequency: 62 pixels, phase: random), tilted 45 degrees clockwise or counterclockwise on different trials. In contrast to Experiments 1-3, here we chose not to dynamically calibrate the stimulus presentation time. We reasoned that conditions that produce strong bias effects will consequently also show degraded accuracy, and that an online calibration process may then selectively make those conditions easier, attenuating bias effects as a result. We found evidence for this in the stimulus presentation times of Experiment 3, where the target stimulus was presented for significantly longer in the reward and loss conditions. Furthermore, 
+
+Participants’ task will be to judge whether the grating was tilted clockwise or counterclockwise. They will indicate their decision using the J and F keys on the keyboard, counterbalanced across participants. The next trial will not begin until participants press one of these keys to indicate their decision. 
+
+In addition to a base payment, participants will be told that they can accumulate points in the task, and that these points will determine whether or not they get a bonus payment. Specifically, that we will double the payment of the top 30%, and triple the payment of the top 5% participants.
+
+In all blocks, participants will be told that correct responses award them with 10 points. In addition, on two 12-loss blocks, a target orientation (randomized between subjects) will be associated with a loss of 12 points, on two 8-loss blocks the same orientation will be associated with a loss of 8 points, and on two 4-loss blocks the same orientation will be associated with a loss of 4 points. Two neutral blocks will include no losses for the target orientation. The order of the eight blocks will be randomized, with the constraint that the two blocks of each condition are always be presented consequently. 
+
+Importantly, in all blocks participants will be motivated to make accurate judgments regarding the content of the presented image, but on some blocks the target orientation (regardless of their decision) will be associated with a gain of points, while on others the target orientation will be associated with a loss of points. Two multiple-choice questions will be used to make sure participants understand these instructions (for example, “To get many points I need to…” correct answer: “press F when the stripes are tilted to the left and J when they are tilted to the right”, and not “press F as many times as possible”; “In addition to getting 10 points for accurate responses, in this block whenever the stripes are tilted to the right…” correct answer: “I automatically lose 12 points”, and not “I lose 12 points only if I pressed J”). Neutral blocks will be preceded by the response mapping comprehension question (“To get many points I need to…” correct answer: “press F when the stripes are tilted to the left and J when they are tilted to the right”). An additional question ("In addition to getting 10 points for accurate responses, in this block whenever the stripes are tilted to the right...", correct response: "I don't get or lose additional points") will be presented only to those participants for which this is not the first experimental condition. 
+
+Task difficulty will be calibrated by adjusting the target presentation time, starting at 60 ms and following a one-up-two-down procedure with a multiplicative step size of 0.9, which will move closer to 1 following each change in the direction of the calibration process. The calibration will run in the background throughout the entire task. 
+
+
+
+```{r design, echo=FALSE, fig.cap="Experimental design.Top left: Trial structure. The target image’s presentation time will be calibrated to achieve 70% accuracy. Top right: incentive structure on different experimental blocks. Bottom: Overall experiment structure.", out.width = '75%'}
+knitr::include_graphics("figures/design_exp7.png")
+```
+
+### Randomization
+
+The order and timing of experimental events will be determined pseudo-randomly by the Mersenne Twister pseudorandom number generator, initialized in a way that ensures registration time-locking [@mazor2019novel]. 
+
+
+## Rejection criteria
+
+Participants will be excluded if their accuracy falls below 50% in one or more experimental conditions (neutral, 12-loss, 8-loss and 4-loss), and for needing four or more repetitions of block instructions before providing a correct response to one or more of the comprehension questions. We will also exclude participants for having extremely fast or slow reaction times in one or more of the tasks (below 100 milliseconds or above 5 seconds in more than 25% of the trials). Trials with response time below 100 milliseconds or above 5 seconds, as well as error trials, will be excluded from the response-time analysis.
+
+## Data analysis
+
+This study is designed to test several hypotheses regarding the effect of motivation on perception, with a focus on perceptual decisions and response time.
+Specifically, we plan to test the following hypotheses:
+
+*Hypothesis 1 (12-LOSS BIAS)*: We will test the null hypothesis that the proportion of reports of seeing the target orientation is similar on 12-loss and neutral blocks, using a two-tailed repeated measures t-test.
+
+*Hypothesis 2 (8-LOSS BIAS)*: We will test the null hypothesis that the proportion of reports of seeing the target orientation is similar on 8-loss and neutral blocks, using a two-tailed repeated measures t-test.
+
+*Hypothesis 3 (4-LOSS BIAS)*: We will test the null hypothesis that the proportion of reports of seeing the target orientation is similar on 4-loss and neutral blocks, using a two-tailed repeated measures t-test.
+
+*Hypothesis 4 (12-LOSS VS. 8-LOSS BIAS)*: We will test the null hypothesis that the proportion of reports of seeing the target orientation is similar on 8-loss and 12-loss blocks, using a two-tailed repeated measures t-test.
+
+*Hypothesis 5 (8-LOSS VS. 4-LOSS BIAS)*: We will test the null hypothesis that the proportion of reports of seeing the target orientation is similar on 4-loss and 8-loss blocks, using a two-tailed repeated measures t-test.
+
+If a qualitative distinction between loss and gain is indeed driving our results, a motivation effect on perception should be observed in the 12-loss condition only, and this effect should be significantly stronger than the effect in the 8-loss condition. In contrast, we should find no difference between response bias in the 8-loss and 4-loss conditions.
+
+*Hypothesis 6 (LOSS EFFECT ON DECISION TIME: TARGET STIMULUS)*: We will test the null hypothesis that response times for the target orientation are similar in the different conditions. This will be tested using a one-way repeated measures ANOVA on the median individual level-response times in correct responses only. 
+
+*Hypothesis 7 (LOSS EFFECT ON DECISION TIME: NEUTRAL STIMULUS)*: We will test the null hypothesis that response times for non-target images are similar in loss and in neutral blocks. This will be tested using a one-way repeated measures ANOVA on the median individual level-response times in correct responses only. 
+
+### Exploratory analysis: Drift Diffusion Modelling (DDM)
+
+DDM assumes that perceptual decisions (was the grating tilted clockwise or anticlockwise) are made by sequentially sampling the sensory evidence from a starting point to one of two boundaries until one of the boundaries is reached and a response is made. There are three ways by which the model could account for a bias towards one boundary. First, motivation may bias the rate of evidence accumulation for desired stimuli (drift biasing). In this case the starting point is identical to an unbiased decision-making process but the gradient of accumulation towards the two bounds differs [@ratcliff2016diffusion]. Second, motivation may shift the starting point of the evidence accumulation process towards a certain decision boundary (seeing a clockwise tilt when it is associated with a reward), and third, motivation may alter both the starting point and drift rate of the accumulation process  - as reported by @leong2019neurocomputational. We will fit different models to the data to examine which behavioural pattern can best explain our results. 
+
+### Power
+
+With 200 participants, we will have `r pwr.t.test(d=0.25,type='one.sample',n=200)$power%>%printnum()` statistical power to detect an effect of 0.25 standard deviations with a within-subject t-test. The effect of the loss manipulation on response bias was 0.27 s.d. in Exp. 1, 0.3 s.d. in Exp. 2, and 0.32 s.d. in Exp. 3. The difference in magnitude between the loss and gain effects on response bias was 0.2 s.d. in Exp. 1, 0.16 in Exp. 2, and 0.34 in Exp. 3. 
+
+\newpage
+
+# References
+
+\begingroup
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
+
+<div id="refs" custom-style="Bibliography"></div>
+\endgroup

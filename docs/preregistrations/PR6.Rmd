@@ -1,0 +1,161 @@
+---
+title             : "Motivated seeing and unseeing - Exp. 6 pre-registration document"
+shorttitle        : "Motivated seeing and unseeing - Exp. 6 pre-registration document"
+
+author: 
+  - name          : "Matan Mazor"
+    affiliation   : "1,2"
+    corresponding : yes    # Define only one corresponding author
+    address       : "Malet Street, London WC1E 7HX"
+    email         : "mtnmzor@gmail.com"
+  #   role:         # Contributorship roles (e.g., CRediT, https://casrai.org/credit/)
+  #     - Conceptualization
+  #     - Writing - Original Draft Preparation
+  #     - Writing - Review & Editing
+  
+  - name          : "Itay Goetz"
+    affiliation   : "3"
+    
+  - name          : "Clare Press"
+    affiliation   : "1,2"
+    # role:
+    #   - Writing - Review & Editing
+
+affiliation:
+  - id            : "1"
+    institution   : "Birkbeck, University of London"
+  - id            : "2"
+    institution   : "Wellcome Centre for Human Neuroimaging, UCL"
+  - id            : "3"
+    institution   : "University of Bamberg"
+
+
+abstract: |
+  
+  
+  
+  <!-- https://tinyurl.com/ybremelq -->
+  
+keywords          : "keywords"
+wordcount         : "X"
+
+bibliography      : ["r-references.bib"]
+
+floatsintext      : no
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : yes
+mask              : no
+draft             : no
+
+documentclass     : "apa6"
+classoption       : "man"
+output            : papaja::apa6_word
+---
+
+```{r setup, include = FALSE}
+library("papaja")
+r_refs("r-references.bib")
+```
+
+```{r analysis-preferences}
+# Seed for random number generation
+set.seed(42)
+knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
+```
+
+# Motivation
+
+In three online experiments, we replicated previously observed effects of motivation on perceptual decisions [@balcetis2012subjective; @leong2021pupil; @leong2019neurocomputational]. Specifically, we found that subjects were less likely to report seeing stimuli that were associated with point loss in a perceptual discrimination task, even when incentivized to report accurately. In contrast, we observed no effects of point gain on perceptual decision making.
+
+In Exp. 4 we examined the generalizability of these loss effects to a detection setting, where decisions are made not about the identity of a stimulus, but about stimulus presence. We compared motivation-neutral settings to settings where stimulus presence or absence are associated with point loss. To our surprise, we found no significant differences. However, follow-up analysis revealed that accuracy in Exp. 4 was higher than in previous experiments (0.80, d'=2.0), and that the magnitude of the presence-loss manipulation on response bias was stronger among participants with lower d'. In Exp. 5, we decreased the visibility level from 20% to 10%, to increase task difficulty and allow bias effects to show. Accuracy in Exp. 5 was still relatively high (0.76, d'=1.71). In both experiments, a clear biasing effect of the presence-loss manipulation emerged when restricting the analysis to subjects with d' below 2.0 only. In Exp. 6, we reduced the visibility level further to 5%, to decrease d' and allow an effect to appear.
+
+# Methods
+We report how we determined our sample size, all data exclusions (if any), all manipulations, and all measures in the study. <!-- 21-word solution (Simmons, Nelson & Simonsohn, 2012; retrieved from http://ssrn.com/abstract=2160588) -->
+
+## Participants
+
+The study was approved by the Research Ethics Committee of Birkbeck, University of London (study ID number 2122050). No adverse effects for participants from participation in the study are expected. Participants will give consent for taking part in the study which can be withdrawn at any time. 
+
+Participants will be recruited from the Prolific database. The criteria for recruitment will be a Prolific approval rate of 95%, English as their first language, and an age between 18 and 60. The study will take participants about 15 minutes of their time. Participants will be paid 7.5 pounds per hour. We will double the payment of the top-performing 30% of our participants, and triple the payment of the top performing 5%.
+
+
+## Procedure
+
+Figure \@ref(fig:design) illustrates the experimental design. In a near-threshold detection task, participants will report whether a noisy stimulus contained a vertical grating, or not. At the beginning of the experiment, participants will be given instructions and their understanding will be checked by a multiple-choice question. Then, participants will be presented with a practice block, which will be repeated until accuracy on the task reaches 75%. The practice round will then be followed by the main part of the experiment, comprising six blocks of 28 trials. At the beginning of each trial a fixation cross will appear on the screen for 500-1000 milliseconds, followed by three grayscale images: a forward mask (presented for 50 ms), the target image (presentation time calibrated to achieve 70% accuracy), and a backward mask (presented until a decision is made). The forward and backward masks will comprise black and white concentric circles. The target image will be a noisy visual grating: 200x200 pixels, where 95% of the pixels show random grayscale values, and the remaining 5% are sampled from a vertical grating (frequency: 44 pixels, phase: random).  Participants’ task will be to judge whether a grating was present or absent. They will be asked to indicate their decision using the J and F keys on the keyboard, counterbalanced across participants. The next trial will not begin until participants press one of these keys to indicate their decision. 
+
+In addition to a base payment, participants will be told that they can accumulate points in the task, and that these points will determine whether or not they get a bonus payment. Specifically, that we will double the payment of the top 30%, and triple the payment of the top 5% participants.
+
+In all blocks, participants will be told that correct responses award them with 10 points. In addition, on two Signal-loss blocks, stimulus presence will be associated with a loss of 12 points, and on two Noise-loss blocks, stimulus absence will be associated with a loss of 12 points. Two neutral blocks will not include a loss manipulation. The order of the six blocks will be randomized, with the constraint that the two blocks of each condition are always be presented consequently. 
+
+Importantly, in all blocks participants will be motivated to make accurate judgments regarding the content of the presented image, but on some blocks stimulus presence (regardless of their decision) will be associated with a loss of points, while on others stimulus absence will be associated with a loss of points. Two multiple-choice questions will be used to make sure participants understand these instructions (for example, “To get many points I need to…” correct answer: “press F when the target image contains stripes and J when it contains just noise”, and not “press F as many times as possible”; “In addition to getting 10 points for accurate responses, in this block I lose points whenever...” correct answer: “the target image contains stripes, and regardless of whether I press J of F.” and not "the target image contains stripes and I press J"). Neutral blocks will be preceded by the response mapping comprehension question (“To get many points I need to…” correct answer: “press F when the target image contains stripes and J when it contains just noise”). An additional question ("In addition to getting 10 points for accurate responses, in this block I lose points whenever...", correct response: "I never lose points in this block.") will be presented only to those participants for which this is not the first experimental condition. In the end of the experiments, participants' understanding of the task instructions will be further probed with an open-ended comprehension check ("We are interested to know if you had any strategy that you used to maximize your point count. Don't worry - this will not affect your bonus payment!").
+
+Task difficulty will be calibrated by adjusting the target presentation time, starting at 150 ms and following a one-up-two-down procedure with a multiplicative step size of 0.9, which will move closer to 1 following each change in the direction of the calibration process. The calibration will run in the background throughout the entire task. 
+
+Upon completion of the main part of the experiment, participants will complete the white bear suppression inventory [@wegner1994chronic].
+
+
+```{r design, echo=FALSE, fig.cap="Experimental design.Top left: Trial structure. The target image’s presentation time will be calibrated to achieve 70% accuracy. Top right: incentive structure on different experimental blocks. Bottom: Overall experiment structure.", out.width = '75%'}
+knitr::include_graphics("figures/design_exp5.png")
+```
+
+### Randomization
+
+The order and timing of experimental events will be determined pseudo-randomly by the Mersenne Twister pseudorandom number generator, initialized in a way that ensures registration time-locking [@mazor2019novel]. 
+
+
+## Rejection criteria
+
+Participants will be excluded if their accuracy falls below 50% in one or more experimental conditions (neutral, signal-loss, noise-loss), and for needing four or more repetitions of block instructions before providing a correct response to one or more of the comprehension questions. We will also exclude participants for having extremely fast or slow reaction times in one or more of the tasks (below 100 milliseconds or above 5 seconds in more than 25% of the trials). Trials with response time below 100 milliseconds or above 5 seconds, as well as error trials, will be excluded from the response-time analysis.
+
+## Data analysis
+
+This study is designed to test several hypotheses regarding the effect of motivation on perception, with a focus on perceptual decisions and response time.
+Specifically, we plan to test the following hypotheses:
+
+*Hypothesis 1 (PRESENCE LOSS EFFECT ON DECISION)*: We will test the null hypothesis that the proportion of 'target-present' responses is similar on signal-loss and neutral blocks, using a two-tailed repeated measures t-test. 
+
+*Hypothesis 2 (ABSENCE LOSS EFFECT ON DECISION)*: We will test the null hypothesis that the proportion of 'target-present' responses is similar on noise-loss and neutral blocks, using a two-tailed repeated measures t-test. 
+
+*Hypothesis 3 (PRESENCE VERSUS ABSENCE LOSS EFFECTS ON DECISION)*: We will test the null hypothesis that effects of presence and absence loss on decision are of similar magnitudes, using a two-tailed repeated measures t-test.
+
+*Hypothesis 4 (PRESENCE LOSS EFFECT ON TARGET-PRESENT DECISION TIMES)*: We will test the null hypothesis that target-present response times are similar in neutral and presence-loss blocks, using a paired t-test on the median individual level-response times in correct responses only. 
+
+*Hypothesis 5 (PRESENCE LOSS EFFECT ON TARGET-ABSENT DECISION TIMES)*: We will test the null hypothesis that target-absent response times are similar in neutral and presence-loss blocks, using a paired t-test on the median individual level-response times in correct responses only. 
+
+*Hypothesis 6 (ABSENCE LOSS EFFECT ON TARGET-PRESENT DECISION TIMES)*: We will test the null hypothesis that target-present response times are similar in neutral and absence-loss blocks, using a paired t-test on the median individual level-response times in correct responses only. 
+
+*Hypothesis 7 (ABSENCE LOSS EFFECT ON TARGET-ABSENT DECISION TIMES)*: We will test the null hypothesis that target-absent response times are similar in neutral and absence-loss blocks, using a paired t-test on the median individual level-response times in correct responses only. 
+
+*Hypothesis 8 (CORRELATION BETWEEN PRESENCE-LOSS EFFECT ON DECISION BIAS AND WBSI SCORE)*: We will test the null hypothesis that the difference between response bias in neutral and presence-loss blocks is unrelated to individual WBSI scores [@wegner1994chronic], by extracting the Pearson correlation between these two measures. 
+
+*Hypothesis 9 (CORRELATION BETWEEN ABSENCE-LOSS EFFECT ON DECISION BIAS AND WBSI SCORE)*: We will test the null hypothesis that the difference between response bias in neutral and absence-loss blocks is unrelated to individual WBSI scores [@wegner1994chronic], by extracting the Pearson correlation between these two measures. 
+
+*Hypothesis 10 (DIFFERENCE BETWEEN WBSI CORRELATIONS)*: We will test the null hypothesis that the correlation of WBSI scores with the presence-loss effect (H8) is similar to its correlation with the absence-loss effect (H9), using a Hotelling-Williams test for dependent correlations, implemented in the R cocor package [@diedenhofen2015cocor] 
+
+### Exploratory analysis: Drift Diffusion Modelling (DDM)
+
+DDM assumes that perceptual decisions (was the grating present or absent) are made by sequentially sampling the sensory evidence from a starting point to one of two boundaries until one of the boundaries is reached and a response is made. There are three ways by which the model could account for a bias towards one boundary. First, motivation may bias the rate of evidence accumulation for desired stimuli (drift biasing). In this case the starting point is identical to an unbiased decision-making process but the gradient of accumulation towards the two bounds differs [@ratcliff2016diffusion]. Second, motivation may shift the starting point of the evidence accumulation process towards a certain decision boundary (seeing a clockwise tilt when it is associated with a reward), and third, motivation may alter both the starting point and drift rate of the accumulation process  - as reported by @leong2019neurocomputational. We will fit different models to the data to examine which behavioural pattern can best explain our results. 
+
+### Exploratory analysis: Factor analysis of WBSI results
+
+Following @blumberg2000white, we will decompose the WBSI inventory into three constituent factors: unwanted intrusive thoughts (an example item: 'I have thoughts that I cannot stop'), thought suppression ('There are things that I try not to think about'), and self-distraction ('I often do things to distract myself from my thoughts'). We will then measure the Pearson correlation of each of these three factors with presence-loss and absence-loss effects on decision bias. 
+
+### Exploratory analysis: Focusing on subjects with d'<2
+
+In light of our exploratory analysis of Experiments 4 and 5, where motivation affected detection rates in subjects with d'<2, we made the task more difficult to bring the average d' down. Our pre-registered analysis does not include an exclusion based on d' in the hope that d' should now go back to typical values of 1-1.5. In case this will not be the case, we will test whether our effects are more apparrent in subjects with d' values below 2.
+
+
+
+
+\newpage
+
+# References
+
+\begingroup
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
+
+<div id="refs" custom-style="Bibliography"></div>
+\endgroup
