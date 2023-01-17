@@ -1,0 +1,131 @@
+---
+title: "UG_analysis"
+author: "Matan Mazor"
+date: "2023-01-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+
+library(groundhog)
+
+groundhog.library(c(
+  'png',
+  'grid',
+  'ggplot2',
+  'svglite',
+  'xtable',
+  'papaja',
+  'tidyverse',
+  'broom',
+  'cowplot',
+  'reticulate',
+  'stringr',
+  'ltm',
+  'cocor',
+  'fddm',
+  'rstatix',
+  'psych'
+), '2022-12-01')
+
+```
+
+```{r load_and_format_data}
+
+UG.raw_df <- read.table("../experiments/pilots/UG_experiment/data/jatos_results_batch1.txt",sep=',', header=TRUE, colClasses=c("stripes_key"="character")) %>%
+  mutate(subj_id=subject_identifier,
+         RT = as.numeric(RT),
+         target_time = as.numeric(target_time),
+         correct = correct=='true',
+         resp=response==tolower(stripes_key),
+         test_part=ifelse(test_part=='WSBI','WBSI',test_part)) %>%
+  filter(subject_identifier!='subject_identifier');
+
+UG.raw_disc_df <- UG.raw_df %>%
+  filter(test_part=='neutral' | test_part=='stripes_loss' | test_part=='noise_loss')
+
+
+```
+
+```{r comments, echo=FALSE, cache=TRUE}
+UG.comments <- UG.raw_df %>%
+  filter(trial_type=='survey-text') %>%
+  dplyr::select(subj_id,response)
+
+```
+
+```{r exclusion, echo=FALSE, cache=TRUE}
+
+
+excludeSubjects <- function(raw_df, test_parts, to_exclude_technical, to_exclude_comprehension) {
+  
+  to_exclude_RT <- raw_df %>%
+  filter(test_part %in% test_parts) %>%
+  group_by(subj_id) %>%
+  summarise(
+    first_quartile_RT = quantile(RT,0.25),
+    third_quartile_RT = quantile(RT,0.75)
+  ) %>%
+    filter(first_quartile_RT<100 | third_quartile_RT>5000) %>%
+  pull(subj_id)
+  
+  # to_exclude_accuracy <- raw_df %>%
+  # filter(test_part %in% test_parts) %>%
+  # group_by(subj_id,test_part) %>%
+  # summarise(
+  #   accuracy = mean(correct)
+  # ) %>%
+  #   filter(accuracy<0.5) %>%
+  # pull(subj_id) %>%
+  # unique()
+  
+  to_exclude_accuracy <- raw_df %>%
+  filter(test_part %in% test_parts) %>%
+  group_by(subj_id,test_part) %>%
+  summarise(
+    accuracy = mean(correct)
+  ) %>%
+    group_by(subj_id) %>%
+    summarise(min_acc=min(accuracy),
+              avrg_acc=mean(accuracy))%>%
+    filter(min_acc<=0.5) %>%
+  pull(subj_id) %>%
+  unique()
+  
+  filtered_df <- raw_df %>%
+  filter(!(subj_id %in% to_exclude_accuracy | 
+             subj_id %in% to_exclude_RT | 
+             subj_id %in% to_exclude_technical | 
+             subj_id %in% to_exclude_comprehension));
+
+  return(filtered_df)
+}
+
+UG.to_exclude_comprehension <- UG.raw_df %>%
+  group_by(subj_id) %>%
+  summarise(
+    neutral_instruction_repetitions = mean(as.integer(neutral_instruction_repetitions)),
+    stripes_loss_instruction_repetitions = mean(as.integer(stripes_loss_instruction_repetitions)),
+    noise_loss_instruction_repetitions = mean(as.integer(noise_loss_instruction_repetitions)),
+    max_instruction_repetitions = max(neutral_instruction_repetitions,stripes_loss_instruction_repetitions,noise_loss_instruction_repetitions)
+  ) %>%
+    filter(max_instruction_repetitions>3) %>%
+  pull(subj_id) %>%
+  unique()
+
+UG.to_exclude_technical <- c(
+)
+
+UG.df <- excludeSubjects(UG.raw_df,c('neutral','noise_loss','stripes_loss'),UG.to_exclude_technical,UG.to_exclude_comprehension)
+
+```
+
+```{r format-and-save-data, echo=FALSE, cache=TRUE}
+
+UG.df %>%
+  filter(test_part=='neutral' | test_part=='stripes_loss' | test_part=='noise_loss') %>%
+  dplyr::select(subj_id, test_part, stimulus, resp, correct, RT) %>%
+  mutate(resp = ifelse(resp, 'stripes','noise')) %>%
+  write.csv("../experiments/pilots/UG_experiment/data/filtered_data.csv", row.names=FALSE)
+```
