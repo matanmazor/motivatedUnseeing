@@ -56,18 +56,29 @@ output            : papaja::apa6_word
 ---
 
 ```{r setup, include = FALSE}
-library("papaja")
-library('dplyr')
-library('tidyr')
-library('tidyverse')
-library('ggplot2')
-library('jsonlite') # for WSBI
-library('stringr')
-library('ltm')
-library('cocor')
-library("fddm")
-library('rstatix') # for ANOVA
-library('psych') #for comparing correlations
+library('groundhog')
+groundhog.library(
+  c('rstatix',
+    'papaja',
+    'reticulate',
+    'tidyverse',
+    'broom',
+    'cowplot',
+    'ggplot2',
+    'stringr',
+    'ltm',
+    'cocor',
+    'fddm',
+    'psych',
+    'MESS', # for AUCs
+    'lsr', # for effect sizes
+    'pwr', # for power calculations
+    'brms', # for mixed effects modeling
+    'BayesFactor',# for Bayesian t test
+    'jsonlite', #parsing data from sort_trial
+    'afex' #for anova
+  ), "2022-12-01"
+)
 
 r_refs("r-references.bib")
 ```
