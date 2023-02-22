@@ -78,7 +78,7 @@ We report how we determined our sample size, all data exclusions (if any), all m
 
 The study was approved by the Research Ethics Committee of Birkbeck, University of London (study ID number 2122050). No adverse effects for participants from participation in the study are expected. Participants will give consent for taking part in the study which can be withdrawn at any time. 
 
-One hundred participants will be recruited from the Prolific database. The criteria for recruitment will be a Prolific approval rate of 95%, English as their first language, and an age between 18 and 60. The study will take participants about 15 minutes of their time. Participants will be paid 7.5 pounds per hour. The top-performing 30% of participants will get an additional bonus payment of £1.
+One hundred participants will be recruited from the Prolific database. The criteria for recruitment will be a Prolific approval rate of 95%, English as their first language, and an age between 18 and 60. The study will take participants about 8 minutes of their time. Participants will be paid 7.5 pounds per hour. The top-performing 30% of participants will get an additional bonus payment of £1.
 
 
 ## Procedure
@@ -87,14 +87,14 @@ Figure \@ref(fig:design) illustrates the experimental design. In a near-threshol
 
 In addition to a base payment, participants will be told that they can accumulate points in the task, and that these points will determine whether or not they get a bonus payment. Specifically, that a bonus payment of £1 will be given to the top 30% of highest performing participants. 
 
-In all blocks, participants will be told that correct responses award them with 10 points. In addition, on different experimental blocks, either fish or bird images will be associated with a loss of 12 points. These losses will be incurred regardless of whether the images will be occluded or not, and regardless of subjects' responses in the discrimination task. The order of the six blocks will be randomized, with the constraint that the three blocks of each condition are always be presented consequently. 
+Participants will be told that correct responses award them with 10 points. In addition, for different subjects, either fish or bird images will be associated with a loss of 12 points. These losses will be incurred regardless of whether the images will be occluded or not, and regardless of subjects' responses in the discrimination task. 
 
 Two multiple-choice questions will be used to make sure participants understand these instructions (for example, “To get many points I need to…” correct answer: “press F when the second image contained a bird and J when it contained a fish”, and not “press F as many times as possible”; “In addition to getting 10 points for accurate responses, in this block whenever a bird image is presented…” correct answer: “I automatically lose 12 points”, and not “I lose 12 points only if I pressed F”). 
 
 Task difficulty will be calibrated by adjusting the target presentation time, starting at 60 ms and following a one-up-two-down procedure with a multiplicative step size of 0.9, which will move closer to 1 following each change in the direction of the calibration process. The calibration will run in the background throughout the entire task. Trials in which the stimulus was occluded will be ignored in the calibration procedure.
 
-```{r design, echo=FALSE, fig.cap="Experimental design. Top left: Trial structure. Presentation time will be calibrated to achieve 70% accuracy. On occluded trials, a black square will occlude the images. Right: incentive structure on different experimental blocks. Bottom: Overall experiment structure.", out.width = '75%'}
-knitr::include_graphics("../figures/design_occluded.png")
+```{r design, echo=FALSE, fig.cap="Experimental design. Top left: Trial structure. Presentation time will be calibrated to achieve 70% accuracy. On occluded trials, a black square will occlude the images. Middle: incentive structure for different subjects. Bottom: Overall experiment structure.", out.width = '75%'}
+knitr::include_graphics("../figures/design_occluded_short.png")
 ```
 
 ### Randomization
@@ -104,21 +104,19 @@ The order and timing of experimental events will be determined pseudo-randomly b
 
 ## Rejection criteria
 
-Participants will be excluded if their accuracy falls below 50% in the non-occluded trials of one or more experimental conditions (bird-loss and fish loss). We will also exclude participants for having extremely fast or slow reaction times in one or more of the tasks (below 100 milliseconds or above 5 seconds in more than 25% of the trials). Trials with response time below 100 milliseconds or above 5 seconds will be excluded 
-from the response-time analysis.
+Participants will be excluded if their accuracy falls below 50% in the non-occluded trials. We will also exclude participants for having extremely fast or slow reaction times in one or more of the tasks (below 100 milliseconds or above 5 seconds in more than 25% of the trials). Trials with response time below 100 milliseconds or above 5 seconds will be excluded from the response-time analysis.
 
 ## Data analysis
 
 This study is designed to test several hypotheses regarding the effect of motivation on perception, with a focus on perceptual decisions and response time.
 Specifically, we plan to test the following hypotheses:
 
-*Hypothesis 1 (MOTIVATED SEEING)*: We will test the null hypothesis that the proportion of reports of seeing a bird is similar on bird-loss and fish-loss non-occluded trials, using a two-tailed repeated measures t-test. 
+*Hypothesis 1 (MOTIVATED SEEING)*: We will test the null hypothesis that the proportion of reports of seeing a bird in revealed trials is similar among bird-loss and fish-loss participants, using a two-tailed between-subjects t-test. 
 
-*Hypothesis 2 (MOTIVATED GUESSING)*: We will test the null hypothesis that the proportion of reports of seeing a bird is similar on bird-loss and fish-loss occluded trials, using a two-tailed repeated measures t-test. 
+*Hypothesis 2 (MOTIVATED GUESSING)*: We will test the null hypothesis that the proportion of reports of "bird" guesses in revealed trials is similar on bird-loss and fish-loss participants, using a two-tailed between-subjects t-test. 
 
 *Hypothesis 3 (INTERACTION: BIAS)*: We will test the null hypothesis that motivated seeing and motivated guessing effects are similar in magnitude, using a two-tailed repeated measures t-test. 
 
-*Hypothesis 4 (MOTIVATED SEEING ON TOP OF MOTIVATED GUESSING)*: We will test the null hypothesis that the proportion of reports of seeing a bird is similar on bird-loss and fish-loss non-occluded trials, after regressing out the variance explained by the difference in the proportion of reports of seeing a bird on bird-loss and fish-loss occluded trials. This will be done in two steps. First, a linear regression model will be fit to predict subject-level differences in the proportion of seeing a bird in fish-loss and bird-loss non-occluded trials from the same difference extracted from occluded trials. Then, we will test the significance of the intercept term against zero. A positive intercept term will indicate that associating a stimulus with point loss affects perceptual decisions over and above what can be explained by guessing beahviour.
 
 *Hypothesis 4 (LOSS EFFECT ON DECISION TIME: PERCEPTION TRIALS)*: We will test the null hypothesis that response times for images that are associated with a loss are similar to response times for neutral images. This will be tested using a paired t-test on the median individual level-response times (correct trials only). 
 
