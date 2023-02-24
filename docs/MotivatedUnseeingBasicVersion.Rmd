@@ -259,6 +259,21 @@ E7.raw_disc_df <- E7.raw_df %>%
 
 E7.export <-
 read_csv('../experiments/detection7/data/prolific_export_batch1.csv')
+
+E8.raw_df <- read.table("../experiments/occlusion8/data/jatos_results_batch1.txt",sep=',', header=TRUE) %>%
+  mutate(subj_id=subject_identifier,
+         RT = as.numeric(RT),
+         target_time = as.numeric(target_time),
+         correct = correct=='true',
+         hidden= hidden=='true',
+         resp=response==tolower(fish_key)) %>%
+  filter(subject_identifier!='subject_identifier');
+
+E8.raw_disc_df <- E8.raw_df %>%
+  filter(test_part=='fish_loss' | test_part=='bird_loss')
+
+E8.export <-
+read_csv('../experiments/occlusion8/data/prolific_export_batch1.csv')
 ```
 
 ```{r exclusion, echo=FALSE, cache=TRUE}
@@ -404,6 +419,39 @@ E7.df <- excludeSubjects(E7.raw_df,c('neutral','noise_loss','stripes_loss'),
                          E7.to_exclude_technical,
                          E7.to_exclude_comprehension)
 
+E8.to_exclude_comprehension <- E8.raw_df %>%
+  group_by(subj_id) %>%
+  summarise(
+    practice_instruction_repetitions = mean(as.integer(practice_instruction_repetitions)),
+    nofish_instruction_repetitions = mean(as.integer(nofish_instruction_repetitions)),
+    nobird_instruction_repetitions = mean(as.integer(nobird_instruction_repetitions)),
+    max_instruction_repetitions = max(practice_instruction_repetitions,
+                                      nofish_instruction_repetitions,
+                                      nobird_instruction_repetitions)
+  ) %>%
+  filter(max_instruction_repetitions>2) %>%
+  pull(subj_id) %>%
+  unique()
+
+# 270785 thought they should skip occluded trials
+# 270805 thought they should press F in occluded trials
+# 270807 thought they should wait in occluded trials
+# 270725 thought they shouldn't press anything in occluded trials
+# 270736 answered to the comprehension question "Concentrate to ensure you see the images."
+# 270717 answered "indicate fish"
+# 270700 answered "ignore"
+# 270704 answered "select the fish option?"
+# 270706 answered "nothing"
+# 270701 answered "we should press f if a fish is seen and j if a bird is seen"
+
+E8.to_exclude_technical = c('270785', '270805', '270807', '270725',
+                                   '270736', '270717', '270700', '270704',
+                                   '270706', '270701' );
+
+E8.df <- excludeSubjects(E8.raw_df,c('bird_loss','fish_loss'),
+                                E8.to_exclude_technical,
+                                E8.to_exclude_comprehension)
+
 ```
 
 ```{r basic_stats, echo=FALSE, cache=TRUE}
@@ -415,6 +463,7 @@ E7.df <- excludeSubjects(E7.raw_df,c('neutral','noise_loss','stripes_loss'),
  E5.N_total <- E5.raw_df$subj_id%>%unique()%>%length()
  E6.N_total <- E6.raw_df$subj_id%>%unique()%>%length()
  E7.N_total <- E7.raw_df$subj_id%>%unique()%>%length()
+ E8.N_total <- E8.raw_df$subj_id%>%unique()%>%length()
 
  
 E1.median_completion_time <-
@@ -456,6 +505,12 @@ E6.median_completion_time <-
 
 E7.median_completion_time <-
     E7.export %>%
+    filter(Status=='APPROVED') %>%
+    '$'('Time taken') %>%
+    median()/60
+
+E8.median_completion_time <-
+    E8.export %>%
     filter(Status=='APPROVED') %>%
     '$'('Time taken') %>%
     median()/60
@@ -553,6 +608,22 @@ E7.bias <- E7.df  %>%
 
 E7.bias_first_block <- E7.df%>%
   getBiasFirstBlock()
+
+E8.bias_bird_loss <- E8.df %>%
+  filter(test_part %in% c('bird_loss')) %>%
+  group_by(subj_id,hidden) %>%
+  summarise(bias=mean(resp)) %>% 
+  mutate(hidden=ifelse(hidden,'occluded','revealed')) %>% 
+  spread(hidden,bias) %>%
+  mutate(diff=revealed-occluded)
+
+E8.bias_fish_loss <- E8.df %>%
+  filter(test_part %in% c('fish_loss')) %>%
+  group_by(subj_id,hidden) %>%
+  summarise(bias=mean(resp)) %>% 
+  mutate(hidden=ifelse(hidden,'occluded','revealed')) %>% 
+  spread(hidden,bias) %>%
+  mutate(diff=revealed-occluded)
 ```
 
 ```{r presentation_time, echo=FALSE, cache=TRUE}
@@ -718,6 +789,22 @@ detection.bias <- E4.bias %>%
   labs(y='Response bias effect (%)')
  
  ggsave('figures/detection_bias.png',p,width=4,height=4,dpi=300)
+ 
+ ## E8: occlusion
+ 
+ p<- E8.df %>%
+  filter(test_part %in% c('fish_loss','bird_loss')) %>%
+  group_by(subj_id,hidden,test_part) %>%
+  summarise(bias=mean(resp)) %>% 
+  mutate(hidden=ifelse(hidden,'occluded','revealed')) %>%
+  ggplot(aes(y=bias,x=test_part)) +
+  geom_boxplot() +
+  geom_jitter(width=0.1,size=2,alpha=0.5) +
+  facet_wrap(~hidden) +
+  labs(x='block',y='proportion of "fish" responses') +
+  theme_classic()
+
+ggsave('figures/occluded_bias.png',p,width=5,height=3)
 
 
 ```
@@ -884,6 +971,16 @@ E7.c <- E7.sdt %>%
 E7.d <- E7.sdt %>%
   dplyr::select(subj_id,test_part,dprime) %>%
   spread(test_part,dprime)
+
+E8.sdt <- E8.df %>%
+  filter(!hidden) %>%
+  getSDTFirstBlock()
+
+E8.sdt_fish_loss <- E8.sdt %>%
+  filter(test_part=='fish_loss')
+
+E8.sdt_bird_loss <- E8.sdt %>%
+  filter(test_part=='bird_loss')
 
 ```
 
@@ -1535,7 +1632,7 @@ Exp. 7 was identical to Exp. 5 except for the stimulus presentation time which w
 
 Median completion time was `r printnum(E7.median_completion_time)` minutes. Mean accuracy was `r printnum(E7.raw_disc_df$correct%>%mean())`. Participants reported target presence on `r printnum(E7.raw_disc_df$resp%>%mean())` of the trials. Overall we excluded `r E7.N_total-E7.df$subj_id%>%unique()%>%length()` participants based on our exclusion criteria, leaving `r E7.df$subj_id%>%unique()%>%length()` participants for the main analysis. 
 
-In Exp. 7, associating stimulus absence with point loss had 7 significant effect on participants' decision bias. The proportion of target-presence reports in absence-loss (`r E7.bias$noise_loss%>%mean()%>%printnum()`) was significantly higher than in neutral blocks (`r E7.bias$neutral%>%mean()%>%printnum()`; `r E7.bias$noise_loss_effect%>%t.test()%>%apa_print()%>%'$'(full_result)`). 
+In Exp. 7, associating stimulus absence with point loss had a significant effect on participants' decision bias. The proportion of target-presence reports in absence-loss (`r E7.bias$noise_loss%>%mean()%>%printnum()`) was significantly higher than in neutral blocks (`r E7.bias$neutral%>%mean()%>%printnum()`; `r E7.bias$noise_loss_effect%>%t.test()%>%apa_print()%>%'$'(full_result)`). 
 
 Similarly, the proportion of target-presence responses on blocks in which stimulus presence was associated with point loss was `r E7.bias$stripes_loss%>%mean()%>%printnum()` and significantly reduced compared to neutral blocks (`r E7.bias$stripes_loss_effect%>%t.test()%>%apa_print()%>%'$'(full_result)`). The effects of presence-loss and absence-loss were not significantly different in magnitude (`r E7.bias$interaction%>%t.test()%>%apa_print()%>%'$'(full_result)`). 
 
@@ -1547,6 +1644,53 @@ We next turned to response times. Similar to Exp. 6, a two-way repeated measured
 The mean WBSI score was `r E7.WBSI$WBSI%>%mean()%>%printnum()` and slightly higher than the mean scores reported in @wegner1994chronic ($43.4$-$51.7$) and (@blumberg2000white ($50.50$). Relibability was high, with a Cronbach alpha of `r E7.WBSI%>%dplyr::select(prefer_not_to_think:tell)%>%cronbach.alpha()%>%'$'(alpha)%>%printnum()`. 
 
 WBSI scores were not reliably correlated with presence-loss effects on decision bias (`r cor.test(E7.WBSI$WBSI,E7.WBSI$stripes_loss_effect)%>%apa_print()%>%'$'(full_result)`), not with the effects of absence-loss on decision bias (`r cor.test(E7.WBSI$WBSI,E7.WBSI$noise_loss_effect)%>%apa_print()%>%'$'(full_result)`). 
+
+# Experiment 8
+
+Assuming that representations of the target-absent stimulus are not amenable to suppression at the perceptual level, symmetric decision bias effects of associating stimulus presence or absence with point loss seem inconsistent with a sensory suppression account. Here we examined an alternative account, namely that motivated seeing effects emerge not at the perceptual, but at the decision level.
+
+## Methods
+
+Exp. 8 followed the general structure of Exp. 1 and 2, where subjects decided whether noisy images included a bird or a fish. However, we introduced several important changes. First, the motivation manipulation was tested in a between-subject manner: for different participants, either fish or bird images were associated with point loss. And second, on a random subset of trials, stimuli were masked by a black square. On these trials, subjects were asked to guess the content of the image underneath the square, in the absence of any perceptual input. These trials served as a non-perceptual control condition, where decisional biases cannot be driven by perception.
+
+```{r design8, echo=FALSE, fig.cap="Experimental design, Exp. 8. Top left: Trial structure. Presentation time will be calibrated to achieve 70% accuracy. On occluded trials, a black square will occlude the images. Middle: incentive structure for different subjects. Bottom: Overall experiment structure.", out.width = '75%'}
+knitr::include_graphics("figures/design_occluded_short.png")
+```
+
+## Results
+
+`r E8.N_total` participants were recruited from Prolific for Experiment 7. 
+
+Median completion time was `r printnum(E8.median_completion_time)` minutes. Mean accuracy was `r printnum(E8.raw_disc_df%>%filter(!hidden)%>%pull(correct)%>%mean())` in non-occluded trials and `r printnum(E8.raw_disc_df%>%filter(hidden)%>%pull(correct)%>%mean())` in occluded trials. Participants reported seeing a fish on `r printnum(E8.raw_disc_df$resp%>%mean())` of the trials. Overall we excluded `r E8.N_total-E8.df$subj_id%>%unique()%>%length()` participants based on our exclusion criteria, leaving `r E8.df$subj_id%>%unique()%>%length()` participants for the main analysis. 
+
+Consistent with the results from Exp. 1 and 2, the loss manipulation affected response bias in non-occluded trials. Participants for which bird stimuli were associated with point loss reported seeing a fish on `r printnum(E8.bias_bird_loss$revealed%>%mean())` of the trials, significantly more than the proportion of fish reports in the group of participants for whom fish images were associated with point loss (`r printnum(E8.bias_fish_loss$revealed%>%mean())`; `r apa_print(t.test(E8.bias_bird_loss$revealed,E8.bias_fish_loss$revealed))$statistic`).
+
+Importantly, a similar effect was observed in occluded trials (mean proportion of fish reports among bird-loss participants: `r printnum(E8.bias_bird_loss$occluded%>%mean())`, and among fish-loss participants: `r printnum(E8.bias_fish_loss$occluded%>%mean())`), but this effect was not significant (`r apa_print(t.test(E8.bias_bird_loss$occluded,E8.bias_fish_loss$occluded))$statistic`). Importantly, the difference in response bias between occluded and non-occluded trials was itself not different between the two groups (`r apa_print(t.test(E8.bias_bird_loss$diff,E8.bias_fish_loss$diff))$statistic`), providing no support for a perceptual effect beyond the biasing effect in occluded trials. 
+
+```{r bias8, echo=FALSE, fig.cap="Propotion of fish responses as a function of group (bird-loss or fish-loss) and condition (occluded or not) in Exp. 8.", out.width = '75%'}
+knitr::include_graphics("figures/occluded8_bias.png")
+```
+
+```{r RT8, cache=TRUE, echo=FALSE}
+
+E8.RT <- E8.df %>%
+  #true is the response that is associated with point loss
+  mutate(resp = ifelse(test_part=='bird_loss',!resp,resp)) %>% 
+  filter((correct | hidden)) %>%
+  group_by(subj_id,hidden,resp) %>%
+  summarise(RT=median(RT)) %>% 
+  mutate(hidden=ifelse(hidden,'occluded','revealed'),
+         resp=ifelse(resp,'loss','neutral')) %>% 
+  spread(resp,RT) %>%
+  mutate(diff=loss-neutral) %>%
+  dplyr::select(subj_id,hidden,diff)%>%
+  spread(hidden,diff) %>%
+  mutate(diff=revealed-occluded)
+
+
+```
+
+Response times were similar for stimuli that were or were not associated with point loss, both when stimuli were visible (`r apa_print(E8.RT$revealed%>%t.test())$full_result`), and when they were occluded (`r apa_print(E8.RT$occluded%>%t.test())$full_result`) with no significant interaction between stimulus value and occlusion on response time (`r apa_print(E8.RT$diff%>%t.test())$full_result`).
 
 \newpage
 
