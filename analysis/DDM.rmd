@@ -1,0 +1,1167 @@
+---
+title: "DDM"
+author: "Matan Mazor"
+date: "2023-02-08"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+library('groundhog')
+groundhog.library(
+  c('rstatix',
+    'papaja',
+    'reticulate',
+    'tidyverse',
+    'broom',
+    'cowplot',
+    'ggplot2',
+    'stringr',
+    'ltm',
+    'cocor',
+    'fddm',
+    'psych',
+    'MESS', # for AUCs
+    'lsr', # for effect sizes
+    'pwr', # for power calculations
+    'brms', # for mixed effects modeling
+    'BayesFactor',# for Bayesian t test
+    'jsonlite', #parsing data from sort_trial
+    'afex' #for anova
+  ), "2022-12-01"
+)
+
+r_refs("r-references.bib")
+```
+
+```{r analysis-preferences}
+# Seed for random number generation
+set.seed(42)
+knitr::opts_chunk$set(cache.extra = knitr::rand_seed, warning = FALSE)
+```
+
+```{r load_and_format_data, echo=FALSE, cache=TRUE}
+
+## E1
+E1.raw_df <- read.table("../experiments/bird_fish/data/jatos_results_batch1.txt",sep=',', header=TRUE, colClasses=c("bird_key"="character")) %>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = correct=='true',
+         RT = as.numeric(RT),
+         resp = toupper(response)==toupper(bird_key),
+         target_time = as.numeric(target_time));
+
+E1.raw_disc_df <- E1.raw_df %>%
+  filter(test_part=='neutral' | test_part=='bird_bonus' | test_part=='bird_loss')
+
+E1.export <- read_csv('../experiments/bird_fish/data/prolific_export_batch1.csv')  %>%
+  rename('subj_id' = 'participant_id')
+
+## E2
+E2.raw_df <- read.table("../experiments/fish_bird2/data/jatos_results_batch1.txt",sep=',', header=TRUE, colClasses=c("fish_key"="character")) %>%
+  mutate(subj_id=PROLIFIC_PID,
+         correct = correct=='true',
+         RT = as.numeric(RT),
+         resp = toupper(response)==toupper(fish_key),
+         target_time = as.numeric(target_time))
+
+E2.raw_disc_df <- E2.raw_df %>%
+  filter(test_part=='neutral' | test_part=='fish_bonus' | test_part=='fish_loss')
+
+
+E2.export <- read_csv('../experiments/fish_bird2/data/prolific_export_batch1.csv')  %>%
+  rename('subj_id' = 'participant_id')
+
+## E3
+
+E3.raw_df <- read.csv("../experiments/gratings3/data/jatos_resultfiles_batch1/all_data.csv") %>%
+  mutate(subj_id=PROLIFIC_PID,
+         resp_orientation = ifelse(response=='j', 'right', 'left'),
+         resp = resp_orientation==target_orientation,
+         RT = as.numeric(RT),
+         target_time = as.numeric(target_time));
+
+E3.raw_disc_df <- E3.raw_df %>%
+  filter(test_part=='neutral' | test_part=='bonus' | test_part=='loss')
+
+
+E3.export <- read_csv('../experiments/gratings3/data/prolific_export_batch1.csv')  %>%
+  rename('subj_id' = 'participant_id')
+
+
+## E4
+
+E4.raw_df <- read.table("../experiments/detection4/data/jatos_results_batch3.txt",sep=',', header=TRUE, colClasses=c("stripes_key"="character")) %>%
+  mutate(subj_id=PROLIFIC_PID,
+         RT = as.numeric(RT),
+         target_time = as.numeric(target_time),
+         correct = correct=='true',
+         resp=response==tolower(stripes_key),
+         test_part=ifelse(test_part=='WSBI','WBSI',test_part)) %>%
+  filter(PROLIFIC_PID!='PROLIFIC_PID');
+
+E4.raw_disc_df <- E4.raw_df %>%
+  filter(test_part=='neutral' | test_part=='stripes_loss' | test_part=='noise_loss')
+
+
+E4.export <- read_csv('../experiments/detection4/data/prolific_export_batch3.csv')  %>%
+  rbind(read_csv('../experiments/detection4/data/prolific_export_batch3.1.csv'))  %>%
+  rename('subj_id' = 'participant_id')
+
+
+## E5
+
+E5.raw_df <- read.table("../experiments/detection5/data/jatos_results_batch1.txt",sep=',', header=TRUE, colClasses=c("stripes_key"="character")) %>%
+  mutate(subj_id=PROLIFIC_PID,
+         RT = as.numeric(RT),
+         target_time = as.numeric(target_time),
+         correct = correct=='true',
+         resp=response==tolower(stripes_key),
+         test_part=ifelse(test_part=='WSBI','WBSI',test_part)) %>%
+  filter(PROLIFIC_PID!='PROLIFIC_PID');
+
+E5.raw_disc_df <- E5.raw_df %>%
+  filter(test_part=='neutral' | test_part=='stripes_loss' | test_part=='noise_loss')
+
+
+E5.export <- read_csv('../experiments/detection5/data/prolific_export_batch1.csv')  %>%
+  rename('subj_id' = 'participant_id')
+
+
+## E6
+# In Exp. 6, batch 3 was accidentally run with visibility =0.4, and is therefore excluded
+E6.raw_df <- read.table("../experiments/detection6/data/jatos_results_batch1.txt",sep=',', header=TRUE, colClasses=c("stripes_key"="character")) %>%
+  rbind( read.table("../experiments/detection6/data/jatos_results_batch2.txt",sep=',', header=TRUE, colClasses=c("stripes_key"="character"))) %>%
+  mutate(visibility = 0.05)%>%
+  rbind( read.table("../experiments/detection6/data/jatos_results_batch4.txt",sep=',', header=TRUE, colClasses=c("stripes_key"="character"))) %>%
+  mutate(subj_id=PROLIFIC_PID,
+         RT = as.numeric(RT),
+         target_time = as.numeric(target_time),
+         correct = correct=='true',
+         resp=response==tolower(stripes_key),
+         test_part=ifelse(test_part=='WSBI','WBSI',test_part)) %>%
+  filter(PROLIFIC_PID!='PROLIFIC_PID') %>%
+  filter(!(subj_id %in% c("5a4b5c5135c9d50001fdd221", "5d95dfca33f8930017e85486", "616555ec3460f0a519c1cdff", "611d0c81b724fc22874aea50", "60d60ba4fd799e149121b85b", "61f2ab2fa09e72f23cbaf316", "59e32f80d838ae000185083c", "5ebd495e39fb6f017b95054a", "60b9f1fe58782eeab6372f1c", "5f3ec6221b5af3158bc86acd", "5f522c40069004482b3af322", "5b421b9ac2e3810001763252", "599a9252bbe848000179676e", "5f639c21192b540a86e6e559", "60fd4d2218f36f098dcb48ec", "5ee4aab1232e9d1b4d791bae", "596e1edd39e9d00001b7bb98", "5c84ed0cbda42300152f5952")));
+
+# This last condition is because 18 subjects already took part in a previous experiment of this study,
+# due to a bug on the Prolific system (we were reimbursed for these subjects and collected new participants instead of them)
+
+E6.raw_disc_df <- E6.raw_df %>%
+  filter(test_part=='neutral' | test_part=='stripes_loss' | test_part=='noise_loss')
+
+
+E6.export <-
+read_csv('../experiments/detection6/data/prolific_export_batch1.csv')  %>%
+  rbind(read_csv('../experiments/detection6/data/prolific_export_batch2.csv'))%>%
+  rbind(read_csv('../experiments/detection6/data/prolific_export_batch4.csv'))%>%
+  rename('subj_id' = 'participant_id')
+
+
+## E7
+E7.raw_df <- read.table("../experiments/detection7/data/jatos_results_batch1.txt",sep=',', header=TRUE, colClasses=c("stripes_key"="character")) %>%
+  mutate(subj_id=PROLIFIC_PID,
+         RT = as.numeric(RT),
+         target_time = as.numeric(target_time),
+         correct = correct=='true',
+         resp=response==tolower(stripes_key),
+         test_part=ifelse(test_part=='WSBI','WBSI',test_part)) %>%
+  filter(PROLIFIC_PID!='PROLIFIC_PID');
+
+E7.raw_disc_df <- E7.raw_df %>%
+  filter(test_part=='neutral' | test_part=='stripes_loss' | test_part=='noise_loss')
+
+E7.export <-
+read_csv('../experiments/detection7/data/prolific_export_batch1.csv')
+
+## E8
+E8.raw_df <- read.table("../experiments/occlusion8/data/jatos_results_batch1.txt",sep=',', header=TRUE) %>%
+  mutate(subj_id=subject_identifier,
+         RT = as.numeric(RT),
+         target_time = as.numeric(target_time),
+         correct = correct=='true',
+         hidden= hidden=='true',
+         resp=response==tolower(fish_key)) %>%
+  filter(subject_identifier!='subject_identifier');
+
+E8.raw_disc_df <- E8.raw_df %>%
+  filter(test_part=='fish_loss' | test_part=='bird_loss')
+
+E8.export <-
+read_csv('../experiments/occlusion8/data/prolific_export_batch1.csv')
+```
+
+```{r exclusion, echo=FALSE, cache=TRUE}
+
+
+excludeSubjects <- function(raw_df, test_parts, to_exclude_technical, to_exclude_comprehension) {
+  
+  to_exclude_RT <- raw_df %>%
+  filter(test_part %in% test_parts) %>%
+  group_by(subj_id) %>%
+  summarise(
+    first_quartile_RT = quantile(RT,0.25),
+    third_quartile_RT = quantile(RT,0.75)
+  ) %>%
+    filter(first_quartile_RT<100 | third_quartile_RT>5000) %>%
+  pull(subj_id)
+  
+  to_exclude_accuracy <- raw_df %>%
+  filter(test_part %in% test_parts) %>%
+  group_by(subj_id,test_part) %>%
+  summarise(
+    accuracy = mean(correct)
+  ) %>%
+    filter(accuracy<0.5) %>%
+  pull(subj_id) %>%
+  unique()
+  
+  filtered_df <- raw_df %>%
+  filter(!(subj_id %in% to_exclude_accuracy | 
+             subj_id %in% to_exclude_RT | 
+             subj_id %in% to_exclude_technical | 
+             subj_id %in% to_exclude_comprehension));
+
+  return(filtered_df)
+}
+
+# some participants reported that some images didn't show, so we exclude them.
+E1.to_exclude_technical <- c(
+  '5f901c39da08ae0598da82d5',
+  '610e5239f868e87f3b5a6087'
+)
+
+E1.df <- excludeSubjects(E1.raw_df,c('neutral','bird_loss','bird_bonus'),E1.to_exclude_technical,c())
+
+
+
+E2.to_exclude_technical <- c(
+  '5f1ffcf7eed8dd01d7ac91e4'
+)
+
+E2.df <- excludeSubjects(E2.raw_df,c('neutral','fish_loss','fish_bonus'),E2.to_exclude_technical,c())
+
+
+E3.to_exclude_comprehension <- E3.raw_df %>%
+  group_by(subj_id) %>%
+  summarise(
+    neutral_instruction_repetitions = mean(neutral_instruction_repetitions),
+    loss_instruction_repetitions = mean(loss_instruction_repetitions),
+    bonus_instruction_repetitions = mean(bonus_instruction_repetitions),
+    max_instruction_repetitions = max(neutral_instruction_repetitions,loss_instruction_repetitions,bonus_instruction_repetitions)
+  ) %>%
+    filter(max_instruction_repetitions>3) %>%
+  pull(subj_id) %>%
+  unique()
+
+E3.to_exclude_technical <- c(
+)
+
+E3.df <- excludeSubjects(E3.raw_df,c('neutral','loss','bonus'),E3.to_exclude_technical,E3.to_exclude_comprehension)
+
+
+E4.to_exclude_comprehension <- E4.raw_df %>%
+  group_by(subj_id) %>%
+  summarise(
+    neutral_instruction_repetitions = mean(as.integer(neutral_instruction_repetitions)),
+    stripes_loss_instruction_repetitions = mean(as.integer(stripes_loss_instruction_repetitions)),
+    noise_loss_instruction_repetitions = mean(as.integer(noise_loss_instruction_repetitions)),
+    max_instruction_repetitions = max(neutral_instruction_repetitions,stripes_loss_instruction_repetitions,noise_loss_instruction_repetitions)
+  ) %>%
+    filter(max_instruction_repetitions>3) %>%
+  pull(subj_id) %>%
+  unique()
+
+E4.to_exclude_technical <- c(
+    '5eec48a2a0a86044492efa67'
+)
+
+E4.df <- excludeSubjects(E4.raw_df,c('neutral','noise_loss','stripes_loss'),E4.to_exclude_technical,E4.to_exclude_comprehension)
+
+
+E5.to_exclude_comprehension <- E5.raw_df %>%
+  group_by(subj_id) %>%
+  summarise(
+    neutral_instruction_repetitions = mean(as.integer(neutral_instruction_repetitions)),
+    stripes_loss_instruction_repetitions = mean(as.integer(stripes_loss_instruction_repetitions)),
+    noise_loss_instruction_repetitions = mean(as.integer(noise_loss_instruction_repetitions)),
+    max_instruction_repetitions = max(neutral_instruction_repetitions,stripes_loss_instruction_repetitions,noise_loss_instruction_repetitions)
+  ) %>%
+    filter(max_instruction_repetitions>3) %>%
+  pull(subj_id) %>%
+  unique()
+
+E5.to_exclude_technical <- c(
+)
+
+E5.df <- excludeSubjects(E5.raw_df,c('neutral','noise_loss','stripes_loss'),E5.to_exclude_technical,E5.to_exclude_comprehension)
+
+E6.to_exclude_comprehension <- E6.raw_df %>%
+  group_by(subj_id) %>%
+  summarise(
+    neutral_instruction_repetitions = mean(as.integer(neutral_instruction_repetitions)),
+    stripes_loss_instruction_repetitions = mean(as.integer(stripes_loss_instruction_repetitions)),
+    noise_loss_instruction_repetitions = mean(as.integer(noise_loss_instruction_repetitions)),
+    max_instruction_repetitions = max(neutral_instruction_repetitions,stripes_loss_instruction_repetitions,noise_loss_instruction_repetitions)
+  ) %>%
+    filter(max_instruction_repetitions>3) %>%
+  pull(subj_id) %>%
+  unique()
+
+# "56ce42d9465e580006846f57" reported that he systematically reported the stimulus that was not penalized. 
+E6.to_exclude_technical <- c("56ce42d9465e580006846f57")
+
+E6.df <- excludeSubjects(E6.raw_df,c('neutral','noise_loss','stripes_loss'),E6.to_exclude_technical,E6.to_exclude_comprehension)
+
+E7.to_exclude_comprehension <- E7.raw_df %>%
+  group_by(subj_id) %>%
+  summarise(
+    neutral_instruction_repetitions = mean(as.integer(neutral_instruction_repetitions)),
+    stripes_loss_instruction_repetitions = mean(as.integer(stripes_loss_instruction_repetitions)),
+    noise_loss_instruction_repetitions = mean(as.integer(noise_loss_instruction_repetitions)),
+    max_instruction_repetitions = max(neutral_instruction_repetitions,stripes_loss_instruction_repetitions,noise_loss_instruction_repetitions)
+  ) %>%
+  filter(max_instruction_repetitions>3) %>%
+  pull(subj_id) %>%
+  unique()
+
+# 613f1441f35ae1a22196e144 reported not seeing the stimuli in some blocks
+# 6304deb78f14a18b18ceed4a reported not being sure if their responses affect point loss
+E7.to_exclude_technical = c('613f1441f35ae1a22196e144',
+                            '6304deb78f14a18b18ceed4a');
+
+E7.df <- excludeSubjects(E7.raw_df,c('neutral','noise_loss','stripes_loss'),
+                         E7.to_exclude_technical,
+                         E7.to_exclude_comprehension)
+
+E8.to_exclude_comprehension <- E8.raw_df %>%
+  group_by(subj_id) %>%
+  summarise(
+    practice_instruction_repetitions = mean(as.integer(practice_instruction_repetitions)),
+    nofish_instruction_repetitions = mean(as.integer(nofish_instruction_repetitions)),
+    nobird_instruction_repetitions = mean(as.integer(nobird_instruction_repetitions)),
+    max_instruction_repetitions = max(practice_instruction_repetitions,
+                                      nofish_instruction_repetitions,
+                                      nobird_instruction_repetitions)
+  ) %>%
+  filter(max_instruction_repetitions>2) %>%
+  pull(subj_id) %>%
+  unique()
+
+# 270785 thought they should skip occluded trials
+# 270805 thought they should press F in occluded trials
+# 270807 thought they should wait in occluded trials
+# 270725 thought they shouldn't press anything in occluded trials
+# 270736 answered to the comprehension question "Concentrate to ensure you see the images."
+# 270717 answered "indicate fish"
+# 270700 answered "ignore"
+# 270704 answered "select the fish option?"
+# 270706 answered "nothing"
+# 270701 answered "we should press f if a fish is seen and j if a bird is seen"
+
+E8.to_exclude_technical = c('270785', '270805', '270807', '270725',
+                                   '270736', '270717', '270700', '270704',
+                                   '270706', '270701' );
+
+E8.df <- excludeSubjects(E8.raw_df,c('bird_loss','fish_loss'),
+                                E8.to_exclude_technical,
+                                E8.to_exclude_comprehension)
+
+```
+
+```{r DDM-functions, cache=TRUE, echo=FALSE}
+
+ll_fun <- function(pars, rt, resp, truth, err_tol) {
+  #likelihood function with all parameters allowing to vary
+  v <- numeric(length(rt))
+
+  # the truth is "upper" so use vu
+  v[truth == "upper"] <- pars[[1]]
+  # the truth is "lower" so use vl
+  v[truth == "lower"] <- pars[[2]]
+
+  dens <- dfddm(rt = rt, response = resp, a = pars[[3]], v = v, t0 = pars[[4]],
+                w = pars[[5]], sv = 0, err_tol = 1e-6, log = TRUE)
+
+  return( ifelse(any(!is.finite(dens)), 1e6, -sum(dens)) )
+}
+
+ll_fun2 <- function(a) {
+
+  return(
+    function(pars, rt, resp, truth, err_tol) {
+      v <- numeric(length(rt))
+
+      # the truth is "upper" so use vu
+      v[truth == "upper"] <- pars[[1]]
+      # the truth is "lower" so use vl
+      v[truth == "lower"] <- pars[[2]]
+
+      dens <- dfddm(rt = rt, response = resp, a = a, v = v, t0 = pars[[3]],
+                    w = pars[[4]], sv = 0, err_tol = 1e-6, log = TRUE)
+
+      return( ifelse(any(!is.finite(dens)), 1e6, -sum(dens)) )
+    }
+  )
+
+}
+
+
+rt_fit_step1 <- function(data) {
+
+  # expects the following
+
+  df <- data # assume input data is already formatted
+
+  # Preliminaries
+  ids <- unique(df[["id"]])
+  nids <- max(length(ids), 1) # if inds is null, there is only one individual
+  ninit_vals <- 5
+
+  # Initilize the output dataframe
+  cnames <- c("ID", "Convergence", "Objective",
+              "vu_fit", "vl_fit", "a_fit", "t0_fit", "w_fit")
+  out <- data.frame(matrix(ncol = length(cnames), nrow = nids))
+  colnames(out) <- cnames
+  temp <- data.frame(matrix(ncol = length(cnames)-1, nrow = ninit_vals))
+  colnames(temp) <- cnames[-1]
+
+  # Loop through each individual and starting values
+  for (i in 1:nids) {
+    out[["ID"]][i] <- ids[i]
+
+    # extract data for id i
+    dfi <- df[df[["id"]] == ids[i],]
+    rti <- dfi[["rt"]]
+    respi <- dfi[["response"]]
+    truthi <- dfi[["truth"]]
+
+    # starting value for t0 must be smaller than the smallest rt
+    min_rti <- min(rti)
+
+    # create initial values for this individual
+    init_vals <- data.frame(vu = rnorm(n = ninit_vals, mean = 4, sd = 2),
+                            vl = rnorm(n = ninit_vals, mean = -4, sd = 2),
+                            a  = runif(n = ninit_vals, min = 0.5, max = 5),
+                            t0 = runif(n = ninit_vals, min = 0, max = min_rti),
+                            w  = runif(n = ninit_vals, min = 0, max = 1))
+
+    # loop through all of the starting values
+    for (j in 1:ninit_vals) {
+      mres <- nlminb(init_vals[j,], ll_fun,
+                     rt = rti, resp = respi, truth = truthi,
+                     # limits:   vu,   vl,   a,  t0, w
+                     lower = c(-Inf, -Inf, .01,   0, 0),
+                     upper = c( Inf,  Inf, Inf, Inf, 1))
+      temp[["Convergence"]][j] <- mres[["convergence"]]
+      temp[["Objective"]][j] <- mres[["objective"]]
+      temp[j, -c(1, 2)] <- mres[["par"]]
+    }
+
+    # determine best fit for the individual
+    min_idx <- which.min(temp[["Objective"]])
+    out[i, -1] <- temp[min_idx,]
+  }
+  return(out)
+}
+
+rt_fit_step2 <- function(data, fit1) {
+
+  # expects the following
+
+  df <- data # assume input data is already formatted
+
+  # Preliminaries
+  ids <- unique(df[["id"]])
+  nids <- max(length(ids), 1) # if inds is null, there is only one individual
+  ninit_vals <- 5
+
+  # Initilize the output dataframe
+  cnames <- c("ID", "Convergence", "Objective",
+              "vu_fit", "vl_fit", "t0_fit", "w_fit")
+  out <- data.frame(matrix(ncol = length(cnames), nrow = nids))
+  colnames(out) <- cnames
+  temp <- data.frame(matrix(ncol = length(cnames)-1, nrow = ninit_vals))
+  colnames(temp) <- cnames[-1]
+
+  # Loop through each individual and starting values
+  for (i in 1:nids) {
+    out[["ID"]][i] <- ids[i]
+
+    # extract data for id i
+    dfi <- df[df[["id"]] == ids[i],]
+    rti <- dfi[["rt"]]
+    respi <- dfi[["response"]]
+    truthi <- dfi[["truth"]]
+
+    # starting value for t0 must be smaller than the smallest rt
+    min_rti <- min(rti)
+
+    # create initial values for this individual
+    init_vals <- data.frame(vu = rnorm(n = ninit_vals, mean = 4, sd = 2),
+                            vl = rnorm(n = ninit_vals, mean = -4, sd = 2),
+                            t0 = runif(n = ninit_vals, min = 0, max = min_rti),
+                            w  = runif(n = ninit_vals, min = 0, max = 1))
+
+    #obtain a value for the individual from the previous fit
+    this_subj = strsplit(ids[i],'[.]')[[1]][1]
+    this_a = fit1%>%filter(ID==this_subj)%>%pull(a_fit)
+
+
+    # loop through all of the starting values
+    for (j in 1:ninit_vals) {
+      mres <- nlminb(init_vals[j,], ll_fun2(this_a),
+                     rt = rti, resp = respi, truth = truthi,
+                     # limits:   vu,   vl,  t0, w
+                     lower = c(-Inf, -Inf,   0, 0),
+                     upper = c( Inf,  Inf, Inf, 1))
+      temp[["Convergence"]][j] <- mres[["convergence"]]
+      temp[["Objective"]][j] <- mres[["objective"]]
+      temp[j, -c(1, 2)] <- mres[["par"]]
+    }
+
+    # determine best fit for the individual
+    min_idx <- which.min(temp[["Objective"]])
+    out[i, -1] <- temp[min_idx,]
+  }
+  return(out)
+}
+
+```
+
+
+```{r preprocess-for-DDM, cache=TRUE, echo=FALSE}
+
+E1.ddmdf <- E1.df %>%
+  filter(test_part %in% c('neutral','bird_loss','bird_bonus') & trial_type=='Disc') %>%
+  filter(RT>100 & RT<5000)%>%
+  mutate(id=paste(subj_id,test_part,sep='.'),
+         rt=RT/1000,
+         response=ifelse(resp,'upper','lower'),
+         truth=ifelse(stimulus=='bird','upper','lower')
+         ) %>%
+  dplyr::select(id,rt,response,truth,test_part, subj_id)
+
+E2.ddmdf <- E2.df %>%
+  filter(test_part %in% c('neutral','fish_loss','fish_bonus') & trial_type=='Disc') %>%
+  filter(RT>100 & RT<5000)%>%
+  mutate(id=paste(subj_id,test_part,sep='.'),
+         rt=RT/1000,
+         response=ifelse(resp,'upper','lower'),
+         truth=ifelse(stimulus=='fish','upper','lower')
+  ) %>%
+  dplyr::select(id,rt,response,truth,test_part, subj_id)
+
+E3.ddmdf <- E3.df %>%
+  filter(test_part %in% c('neutral','loss','bonus') & trial_type=='DiscGrating') %>%
+  filter(RT>100 & RT<5000)%>%
+  mutate(id=paste(subj_id,test_part,sep='.'),
+         rt=RT/1000,
+         response=ifelse(resp,'upper','lower'),
+         truth=ifelse(target==1,'upper','lower')
+  ) %>%
+  dplyr::select(id,rt,response,truth,test_part, subj_id)
+
+
+E4.ddmdf <- E4.df %>%
+  filter(test_part %in% c('neutral','stripes_loss','noise_loss') & trial_type=='DiscGrating') %>%
+  filter(RT>100 & RT<5000)%>%
+  mutate(id=paste(subj_id,test_part,sep='.'),
+         rt=RT/1000,
+         response=ifelse(resp,'upper','lower'),
+         truth=ifelse(stimulus=='stripes','upper','lower')
+  ) %>%
+  dplyr::select(id,rt,response,truth,test_part, subj_id)
+
+E5.ddmdf <- E5.df %>%
+  filter(test_part %in% c('neutral','stripes_loss','noise_loss') & trial_type=='DiscGrating') %>%
+  filter(RT>100 & RT<5000)%>%
+  mutate(id=paste(subj_id,test_part,sep='.'),
+         rt=RT/1000,
+         response=ifelse(resp,'upper','lower'),
+         truth=ifelse(stimulus=='stripes','upper','lower')
+  ) %>%
+  dplyr::select(id,rt,response,truth,test_part, subj_id)
+
+E6.ddmdf <- E6.df %>%
+  filter(test_part %in% c('neutral','stripes_loss','noise_loss') & trial_type=='DiscGrating') %>%
+  filter(RT>100 & RT<5000)%>%
+  mutate(id=paste(subj_id,test_part,sep='.'),
+         rt=RT/1000,
+         response=ifelse(resp,'upper','lower'),
+         truth=ifelse(stimulus=='stripes','upper','lower')
+  ) %>%
+  dplyr::select(id,rt,response,truth,test_part, subj_id)
+
+E7.ddmdf <- E7.df %>%
+  filter(test_part %in% c('neutral','stripes_loss','noise_loss') & trial_type=='DiscGrating') %>%
+  filter(RT>100 & RT<5000)%>%
+  mutate(id=paste(subj_id,test_part,sep='.'),
+         rt=RT/1000,
+         response=ifelse(resp,'upper','lower'),
+         truth=ifelse(stimulus=='stripes','upper','lower')
+  ) %>%
+  dplyr::select(id,rt,response,truth,test_part, subj_id)
+
+E8.ddmdf <- E8.df %>%
+  filter(test_part %in% c('fish_loss','bird_loss') & trial_type=='Disc') %>%
+  filter(RT>100 & RT<5000)%>%
+  filter(!hidden) %>%
+  mutate(id=paste(subj_id,test_part,sep='.'),
+         rt=RT/1000,
+         response=ifelse(resp,'upper','lower'),
+         truth=ifelse(stimulus=='fish','upper','lower')
+  ) %>%
+  dplyr::select(id,rt,response,truth,test_part, subj_id)
+```
+
+
+```{r fit-DDM, cache=TRUE, echo=FALSE}
+
+## E1
+E1.initial_fit <- rt_fit_step1(E1.ddmdf %>%
+                           mutate(id=subj_id))
+
+E1.fit <-rt_fit_step2(E1.ddmdf,
+                           E1.initial_fit) %>%
+  rowwise() %>%
+  mutate(subj_id=strsplit(ID,'[.]')[[1]][1],
+         test_part=strsplit(ID,'[.]')[[1]][2])
+
+## E2
+E2.initial_fit <- rt_fit_step1(E2.ddmdf %>%
+                                 mutate(id=subj_id))
+
+E2.fit <-rt_fit_step2(E2.ddmdf,
+                      E2.initial_fit) %>%
+  rowwise() %>%
+  mutate(subj_id=strsplit(ID,'[.]')[[1]][1],
+         test_part=strsplit(ID,'[.]')[[1]][2])
+
+## E3
+E3.initial_fit <- rt_fit_step1(E3.ddmdf %>%
+                                 mutate(id=subj_id))
+
+E3.fit <-rt_fit_step2(E3.ddmdf,
+                      E3.initial_fit) %>%
+  rowwise() %>%
+  mutate(subj_id=strsplit(ID,'[.]')[[1]][1],
+         test_part=strsplit(ID,'[.]')[[1]][2])
+
+## E4
+E4.initial_fit <- rt_fit_step1(E4.ddmdf %>%
+                                 mutate(id=subj_id))
+
+E4.fit <-rt_fit_step2(E4.ddmdf,
+                      E4.initial_fit) %>%
+  rowwise() %>%
+  mutate(subj_id=strsplit(ID,'[.]')[[1]][1],
+         test_part=strsplit(ID,'[.]')[[1]][2])
+
+## E5
+E5.initial_fit <- rt_fit_step1(E5.ddmdf %>%
+                                 mutate(id=subj_id))
+
+E5.fit <-rt_fit_step2(E5.ddmdf,
+                      E5.initial_fit) %>%
+  rowwise() %>%
+  mutate(subj_id=strsplit(ID,'[.]')[[1]][1],
+         test_part=strsplit(ID,'[.]')[[1]][2])
+
+## E6
+
+E6.initial_fit <- rt_fit_step1(E6.ddmdf %>%
+                                 mutate(id=subj_id))
+
+E6.fit <-rt_fit_step2(E6.ddmdf,
+                      E6.initial_fit) %>%
+  rowwise() %>%
+  mutate(subj_id=strsplit(ID,'[.]')[[1]][1],
+         test_part=strsplit(ID,'[.]')[[1]][2])
+
+## E7
+
+E7.initial_fit <- rt_fit_step1(E7.ddmdf %>%
+                                 mutate(id=subj_id))
+
+E7.fit <-rt_fit_step2(E7.ddmdf,
+                      E7.initial_fit) %>%
+  rowwise() %>%
+  mutate(subj_id=strsplit(ID,'[.]')[[1]][1],
+         test_part=strsplit(ID,'[.]')[[1]][2])
+
+## E8
+
+E8.fit <- rt_fit_step1(E8.ddmdf) %>%
+  rowwise() %>%
+  mutate(subj_id=strsplit(ID,'[.]')[[1]][1],
+         test_part=strsplit(ID,'[.]')[[1]][2]) %>%
+  dplyr::select(-ID)
+
+
+```
+
+```{r organize-DDM, cache=TRUE, echo=FALSE}
+
+## E1
+E1.starting_point <- E1.fit %>%
+  dplyr::select(subj_id,test_part,w_fit) %>%
+  spread(test_part,w_fit) %>%
+  mutate(bonus_effect = bird_bonus - neutral,
+         loss_effect = bird_loss - neutral)
+
+E1.vu <- E1.fit %>%
+  dplyr::select(subj_id,test_part,vu_fit) %>%
+  spread(test_part,vu_fit) %>%
+  mutate(bonus_effect = bird_bonus - neutral,
+         loss_effect = bird_loss - neutral)
+
+E1.vl <- E1.fit %>%
+  dplyr::select(subj_id,test_part,vl_fit) %>%
+  spread(test_part,vl_fit) %>%
+  mutate(bonus_effect = bird_bonus - neutral,
+         loss_effect = bird_loss - neutral)
+
+E1.t0 <- E1.fit %>%
+  dplyr::select(subj_id,test_part,t0_fit) %>%
+  spread(test_part,t0_fit) %>%
+  mutate(bonus_effect = bird_bonus - neutral,
+         loss_effect = bird_loss - neutral)
+
+## E2
+
+E2.starting_point <- E2.fit %>%
+  dplyr::select(subj_id,test_part,w_fit) %>%
+  spread(test_part,w_fit) %>%
+  mutate(bonus_effect = fish_bonus - neutral,
+         loss_effect = fish_loss - neutral)
+
+E2.vu <- E2.fit %>%
+  dplyr::select(subj_id,test_part,vu_fit) %>%
+  spread(test_part,vu_fit) %>%
+  mutate(bonus_effect = fish_bonus - neutral,
+         loss_effect = fish_loss - neutral)
+
+E2.vl <- E2.fit %>%
+  dplyr::select(subj_id,test_part,vl_fit) %>%
+  spread(test_part,vl_fit) %>%
+  mutate(bonus_effect = fish_bonus - neutral,
+         loss_effect = fish_loss - neutral)
+
+E2.t0 <- E2.fit %>%
+  dplyr::select(subj_id,test_part,t0_fit) %>%
+  spread(test_part,t0_fit) %>%
+  mutate(bonus_effect = fish_bonus - neutral,
+         loss_effect = fish_loss - neutral)
+
+## E3
+
+E3.starting_point <- E3.fit %>%
+  dplyr::select(subj_id,test_part,w_fit) %>%
+  spread(test_part,w_fit) %>%
+  mutate(bonus_effect = bonus - neutral,
+         loss_effect = loss - neutral)
+
+E3.vu <- E3.fit %>%
+  dplyr::select(subj_id,test_part,vu_fit) %>%
+  spread(test_part,vu_fit) %>%
+  mutate(bonus_effect = bonus - neutral,
+         loss_effect = loss - neutral)
+
+E3.vl <- E3.fit %>%
+  dplyr::select(subj_id,test_part,vl_fit) %>%
+  spread(test_part,vl_fit) %>%
+  mutate(bonus_effect = bonus - neutral,
+         loss_effect = loss - neutral)
+
+E3.t0 <- E3.fit %>%
+  dplyr::select(subj_id,test_part,t0_fit) %>%
+  spread(test_part,t0_fit) %>%
+  mutate(bonus_effect = bonus - neutral,
+         loss_effect = loss - neutral)
+
+## E4
+
+E4.starting_point <- E4.fit %>%
+  dplyr::select(subj_id,test_part,w_fit) %>%
+  spread(test_part,w_fit) %>%
+  mutate(noise_loss_effect = noise_loss - neutral,
+         stripes_loss_effect = stripes_loss - neutral);
+
+E4.vu <- E4.fit %>%
+  dplyr::select(subj_id,test_part,vu_fit) %>%
+  spread(test_part,vu_fit) %>%
+  mutate(noise_loss_effect = noise_loss - neutral,
+         stripes_loss_effect = stripes_loss - neutral)
+
+E4.vl <- E4.fit %>%
+  dplyr::select(subj_id,test_part,vl_fit) %>%
+  spread(test_part,vl_fit) %>%
+  mutate(noise_loss_effect = noise_loss - neutral,
+         stripes_loss_effect = stripes_loss - neutral)
+
+E4.t0 <- E4.fit %>%
+  dplyr::select(subj_id,test_part,t0_fit) %>%
+  spread(test_part,t0_fit) %>%
+  mutate(presence_loss_effect = stripes_loss - neutral,
+         absence_loss_effect = noise_loss - neutral)
+
+## E5
+
+E5.starting_point <- E5.fit %>%
+  dplyr::select(subj_id,test_part,w_fit) %>%
+  spread(test_part,w_fit) %>%
+  mutate(noise_loss_effect = noise_loss - neutral,
+         stripes_loss_effect = stripes_loss - neutral);
+
+E5.vu <- E5.fit %>%
+  dplyr::select(subj_id,test_part,vu_fit) %>%
+  spread(test_part,vu_fit) %>%
+  mutate(noise_loss_effect = noise_loss - neutral,
+         stripes_loss_effect = stripes_loss - neutral)
+
+E5.vl <- E5.fit %>%
+  dplyr::select(subj_id,test_part,vl_fit) %>%
+  spread(test_part,vl_fit) %>%
+  mutate(noise_loss_effect = noise_loss - neutral,
+         stripes_loss_effect = stripes_loss - neutral)
+
+E5.t0 <- E5.fit %>%
+  dplyr::select(subj_id,test_part,t0_fit) %>%
+  spread(test_part,t0_fit) %>%
+  mutate(presence_loss_effect = stripes_loss - neutral,
+         absence_loss_effect = noise_loss - neutral)
+
+## E6
+
+E6.starting_point <- E6.fit %>%
+  dplyr::select(subj_id,test_part,w_fit) %>%
+  spread(test_part,w_fit) %>%
+  mutate(noise_loss_effect = noise_loss - neutral,
+         stripes_loss_effect = stripes_loss - neutral);
+
+E6.vu <- E6.fit %>%
+  dplyr::select(subj_id,test_part,vu_fit) %>%
+  spread(test_part,vu_fit) %>%
+  mutate(noise_loss_effect = noise_loss - neutral,
+         stripes_loss_effect = stripes_loss - neutral)
+
+E6.vl <- E6.fit %>%
+  dplyr::select(subj_id,test_part,vl_fit) %>%
+  spread(test_part,vl_fit) %>%
+  mutate(noise_loss_effect = noise_loss - neutral,
+         stripes_loss_effect = stripes_loss - neutral)
+
+E6.t0 <- E6.fit %>%
+  dplyr::select(subj_id,test_part,t0_fit) %>%
+  spread(test_part,t0_fit) %>%
+  mutate(presence_loss_effect = stripes_loss - neutral,
+         absence_loss_effect = noise_loss - neutral)
+
+## E7
+
+E7.starting_point <- E7.fit %>%
+  dplyr::select(subj_id,test_part,w_fit) %>%
+  spread(test_part,w_fit) %>%
+  mutate(noise_loss_effect = noise_loss - neutral,
+         stripes_loss_effect = stripes_loss - neutral);
+
+E7.vu <- E7.fit %>%
+  dplyr::select(subj_id,test_part,vu_fit) %>%
+  spread(test_part,vu_fit) %>%
+  mutate(noise_loss_effect = noise_loss - neutral,
+         stripes_loss_effect = stripes_loss - neutral)E
+
+E7.vl <- E7.fit %>%
+  dplyr::select(subj_id,test_part,vl_fit) %>%
+  spread(test_part,vl_fit) %>%
+  mutate(noise_loss_effect = noise_loss - neutral,
+         stripes_loss_effect = stripes_loss - neutral)
+
+E7.t0 <- E7.fit %>%
+  dplyr::select(subj_id,test_part,t0_fit) %>%
+  spread(test_part,t0_fit) %>%
+  mutate(presence_loss_effect = stripes_loss - neutral,
+         absence_loss_effect = noise_loss - neutral)
+
+## E8
+
+E8.ddm_fish_loss <- E8.fit %>%
+  filter(test_part=='fish_loss') %>%
+  merge(E8.df %>%
+  filter(test_part %in% c('fish_loss') & hidden) %>%
+    group_by(subj_id) %>%
+    summarise(bias_occluded=mean(resp)),
+  by='subj_id')
+
+E8.ddm_bird_loss <- E8.fit %>%
+  filter(test_part=='bird_loss') %>%
+  merge(E8.df %>%
+  filter(test_part %in% c('bird_loss') & hidden) %>%
+    group_by(subj_id) %>%
+    summarise(bias_occluded=mean(resp)),
+  by='subj_id')
+
+E8.ddm_aligned <- E8.ddm_fish_loss %>%
+  rbind(
+    E8.ddm_bird_loss %>%
+      mutate(bias_occluded=1-bias_occluded,
+             w_fit=1-w_fit,
+             vu = vu_fit,
+             vu_fit = vl_fit,
+             vl_fit = vu) %>%
+      dplyr::select(-vu)
+  )
+  
+```
+
+
+```{r plot-DDM, cache=TRUE, echo=FALSE}
+
+## E1
+p <- E1.fit %>%
+  ggplot(aes(x=w_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='starting point',title='Exp. 1')
+
+ggsave('figures/E1_starting_point_by_condition.png',p,width=5,height=4.5)
+
+p <- E1.fit %>%
+  ggplot(aes(x=vu_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='Drift rate (bird trials)',title='Exp. 1')
+
+ggsave('figures/E1_bird_drift_rate_by_condition.png',p,width=5,height=4.5)
+
+p <- E1.fit %>%
+  ggplot(aes(x=vl_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='Drift rate (fish trials)',title='Exp. 1')
+
+ggsave('figures/E1_fish_drift_rate_by_condition.png',p,width=5,height=4.5)
+
+## E2
+
+p <- E2.fit %>%
+  ggplot(aes(x=w_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='starting point',title='Exp. 2')
+
+ggsave('figures/E2_starting_point_by_condition.png',p,width=5,height=4.5)
+
+p <- E2.fit %>%
+  ggplot(aes(x=vu_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='drift rate (fish trials)',title='Exp. 2')
+
+ggsave('figures/E2_fish_drift_rate_by_condition.png',p,width=5,height=4.5)
+
+p <- E2.fit %>%
+  ggplot(aes(x=vl_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='drift rate (bird trials)',title='Exp. 2')
+
+ggsave('figures/E2_bird_drift_rate_by_condition.png',p,width=5,height=4.5)
+
+## E3
+
+p <- E3.fit %>%
+  ggplot(aes(x=w_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='starting point',title='Exp. 3')
+
+ggsave('figures/E3_starting_point_by_condition.png',p,width=5,height=4.5)
+
+
+## E4
+p <- E4.fit %>%
+  ggplot(aes(x=w_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='starting point',title='Exp. 4')
+
+ggsave('figures/E4_starting_point_by_condition.png',p,width=5,height=4.5)
+
+p <- E4.fit %>%
+  ggplot(aes(x=vu_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='drift rate (presence trials)',title='Exp. 4')
+
+ggsave('figures/E4_presence_drift_by_condition.png',p,width=5,height=4.5)
+
+p <- E4.fit %>%
+  ggplot(aes(x=vl_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='drift rate (absence trials)',title='Exp. 4')
+
+ggsave('figures/E4_absence_drift_by_condition.png',p,width=5,height=4.5)
+
+## E5
+
+p <- E5.fit %>%
+  ggplot(aes(x=w_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='starting point',title='Exp. 3')
+
+ggsave('figures/E5_starting_point_by_condition.png',p,width=5,height=4.5)
+
+p <- E5.fit %>%
+  ggplot(aes(x=vu_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='drift rate (presence trials)',title='Exp. 3')
+
+ggsave('figures/E5_presence_drift_by_condition.png',p,width=5,height=4.5)
+
+p <- E5.fit %>%
+  ggplot(aes(x=vl_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='drift rate (absence trials)',title='Exp. 3')
+
+ggsave('figures/E5_absence_drift_by_condition.png',p,width=5,height=4.5)
+
+## E6
+
+p <- E6.fit %>%
+  ggplot(aes(x=w_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='starting point',title='Exp. 6')
+
+ggsave('figures/E6_starting_point_by_condition.png',p,width=5,height=4.5)
+
+p <- E6.fit %>%
+  ggplot(aes(x=vu_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='drift rate (presence trials)',title='Exp. 6')
+
+ggsave('figures/E6_presence_drift_by_condition.png',p,width=5,height=4.5)
+
+p <- E6.fit %>%
+  ggplot(aes(x=vl_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='drift rate (absence trials)',title='Exp. 6')
+
+ggsave('figures/E6_absence_drift_by_condition.png',p,width=5,height=4.5)
+
+
+## E7
+
+p <- E7.fit %>%
+  ggplot(aes(x=w_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='starting point',title='Exp. 6')
+
+ggsave('figures/E7_starting_point_by_condition.png',p,width=5,height=4.5)
+
+p <- E7.fit %>%
+  ggplot(aes(x=vu_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='drift rate (presence trials)',title='Exp. 6')
+
+ggsave('figures/E7_presence_drift_by_condition.png',p,width=5,height=4.5)
+
+p <- E7.fit %>%
+  ggplot(aes(x=vl_fit,color=test_part))+
+  geom_density(fill="white", alpha=0.5,size=1) +
+  theme_classic() +
+  labs(x='drift rate (absence trials)',title='Exp. 6')
+
+ggsave('figures/E7_absence_drift_by_condition.png',p,width=5,height=4.5)
+
+p <- E7.starting_point %>% 
+  dplyr::select(subj_id, noise_loss_effect,stripes_loss_effect) %>%
+  pivot_longer(
+    cols=noise_loss_effect:stripes_loss_effect,
+    names_to='contrast',
+    values_to='effect'
+  ) %>%
+  mutate(contrast=factor(contrast,
+                         levels=c('noise_loss_effect','stripes_loss_effect'),
+                         labels=c('absence loss','presence loss'))) %>%
+  ggplot(aes(x=contrast,y=effect)) +
+  geom_abline(slope=0,intercept=0,color='black', size=1,)+
+  geom_violin(draw_quantiles = c(0.5), size=1, color='black') +
+  geom_point(position = position_jitter(seed = 1, width = 0.2), alpha=0.1, size=2, color='red') +
+  theme_bw() + 
+  theme(legend.position='none')+
+  labs(y='Starting point effect (a.u.)', title='Exp. 7') 
+
+ggsave('figures/E7_starting_point.png',p,width=4,height=4,dpi=300)
+
+E7.drift <- E7.vl %>%
+  dplyr::select(c('subj_id','noise_loss_effect','stripes_loss_effect')) %>%
+  pivot_longer(
+    cols=noise_loss_effect:stripes_loss_effect,
+    names_to='contrast',
+    values_to='effect'
+  ) %>%
+  mutate(contrast=factor(contrast,
+                         levels=c('noise_loss_effect','stripes_loss_effect'),
+                         labels=c('absence loss','presence loss')),
+         direction='noise') %>%
+  rbind(
+     E7.vu %>%
+    dplyr::select(c('subj_id','noise_loss_effect','stripes_loss_effect')) %>%
+    pivot_longer(
+      cols=noise_loss_effect:stripes_loss_effect,
+      names_to='contrast',
+      values_to='effect'
+    ) %>%
+  mutate(contrast=factor(contrast,
+                         levels=c('noise_loss_effect','stripes_loss_effect'),
+                         labels=c('absence loss','presence loss')),
+         direction='grating')
+  ) %>%
+  mutate(direction=factor(direction))
+
+
+p <- E7.drift %>% 
+  ggplot(aes(y=effect, x=direction, color=direction)) +
+  geom_abline(slope=0,intercept=0,color='black', size=1,)+
+  geom_boxplot(outlier.color=NA, size=1) +
+  geom_point(alpha=0.2, size=2) +
+  facet_wrap(~contrast) + 
+  # scale_color_manual(values=c("#fe6100", "#785ef0"))+
+  theme_bw() + 
+  theme(legend.position='none')+
+  labs(y='Drift rate effect (a.u.)') +
+  scale_y_continuous(limits=c(-3,3))
+
+ggsave('figures/E7_drift.png',p,width=4,height=4,dpi=300)
+```
+
+```{r save-DDM}
+
+E7.DDM_for_Clare <- E7.fit %>% 
+  filter(test_part=='noise_loss') %>%
+  dplyr::select(subj_id,vu_fit,vl_fit,t0_fit,w_fit) %>% 
+  rename_at(vars(-subj_id),function(x) paste0(x,"_noise_loss")) %>%
+  merge(
+    E7.fit %>% 
+    filter(test_part=='stripes_loss') %>%
+    dplyr::select(subj_id,vu_fit,vl_fit,t0_fit,w_fit) %>% 
+    rename_at(vars(-subj_id),function(x) paste0(x,"_stripes_loss"))
+  ) %>%
+  merge(
+    E7.fit %>% 
+    filter(test_part=='neutral') %>%
+    dplyr::select(subj_id,vu_fit,vl_fit,t0_fit,w_fit) %>% 
+    rename_at(vars(-subj_id),function(x) paste0(x,"_neutral"))
+  )
+
+E7.DDM_for_Clare %>% write.csv('../experiments/detection7/data/E7DDM.csv')
+  
+```
